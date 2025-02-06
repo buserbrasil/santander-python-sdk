@@ -33,8 +33,7 @@ beneficiary = BeneficiaryDataDict(
     "conta_dv": "9",
     "tipo_conta": "checking",
     "document_number": "12345678909",
-    "bank_code_compe": "123",
-    "bank_code_ispb": "789123",
+    "bank_code_compe": "123"
   },
   recebedor={
     "name": "John Doe",
