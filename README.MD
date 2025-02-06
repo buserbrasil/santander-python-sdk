@@ -25,25 +25,10 @@ set_configuration(SantanderClientConfiguration(
 # Realizar um pix para uma chave
 transfer = transfer_pix_payment("teste@gmail.com", 9.99, "pix de teste")
 
-# Realizar pix para um beneficiário
-beneficiary = BeneficiaryDataDict(
-  bank_account={
-    "agencia": "123",
-    "conta": "123456789",
-    "conta_dv": "9",
-    "tipo_conta": "checking",
-    "document_number": "12345678909",
-    "bank_code_compe": "123"
-  },
-  recebedor={
-    "name": "John Doe",
-  }
-)
-
-transfer = transfer_pix_payment(beneficiary, 9.99, "pix de teste")
-
 # Obter informações de um pix
 pix_info = get_transfer("id-da-transferencia-pix")
+
+# Uso em atualização
 ```
 
 ## Em desenvolvimento
