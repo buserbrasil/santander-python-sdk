@@ -1,6 +1,6 @@
 import unittest
 from santander_client.api_client.client_configuration import SantanderClientConfiguration
-from tests.mock.santander_mocker import  client_santander_client_config_mock
+from mock.santander_mocker import  client_santander_client_config_mock
 
 class UnitTestSantanderClientConfiguration(unittest.TestCase):
     def setUp(self):

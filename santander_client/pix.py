@@ -6,20 +6,16 @@ from typing import List, Literal
 from santander_client.api_client import get_client
 from santander_client.api_client.exceptions import (
     SantanderClientException,
-    SantanderPaymentException,
     SantanderRejectedTransactionException,
     SantanderRequestException,
     SantanderValueErrorException,
     SantanderTimeoutToChangeStatusException,
 )
-from datetime import datetime
 
 from .api_client.helpers import (
-    convert_to_decimal,
     document_type,
     get_pix_key_type,
     retry_one_time_on_request_exception,
-    today,
     truncate_value,
 )
 from .santander_types import (

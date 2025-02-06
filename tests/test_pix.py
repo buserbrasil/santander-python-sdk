@@ -17,7 +17,7 @@ from santander_client.pix import (
     _request_pix_payment_status,
     transfer_pix_payment,
 )
-from tests.mock.santander_mocker import (
+from mock.santander_mocker import (
     beneficiary_dict_john_cc,
     get_dict_payment_pix_response,
 )

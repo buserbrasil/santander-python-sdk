@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from santander_client.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
 from santander_client.api_client.client_configuration import SantanderClientConfiguration
 from santander_client.api_client.exceptions import SantanderClientException
-from tests.mock.santander_mocker import (
+from mock.santander_mocker import (
     SANTANDER_URL,
     get_dict_token_response,
     get_dict_token_request,
