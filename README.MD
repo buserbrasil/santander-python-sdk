@@ -7,8 +7,7 @@ Este é um cliente não oficial para a API do Santander, desenvolvido em Python.
 Para instalar o pacote, utilize o pip:
 
 ```bash
-pip install santander-py
-```
+pip install santander-python-sdk
 
 ## Uso
 ```

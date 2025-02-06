@@ -25,8 +25,8 @@ classifiers = [
 dependencies = ["requests>=2"]
 
 [project.urls]
-homepage = "https://github.com/buserbrasil/santander-client-py"
-repository = "https://github.com/buserbrasil/santander-client-py"
+homepage = "https://github.com/buserbrasil/santander-python-sdk"
+repository = "https://github.com/buserbrasil/santander-python-sdk"
 
 [tool.uv]
 package = true
