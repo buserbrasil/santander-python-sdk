@@ -1,10 +1,11 @@
+import logging
 from typing import TypedDict
 from .exceptions import SantanderConfigurationException, SantanderWorkspaceException
 from .workspaces import get_first_workspace_id_of_type
 from .client import SantanderApiClient
 from .client_configuration import SantanderClientConfiguration
-from .logger import logger
   
+logger = logging.getLogger("santanderLogger")
       
 santander_client_configuration = None
       

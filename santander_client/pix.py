@@ -1,4 +1,5 @@
 from decimal import Decimal as D
+import logging
 from time import sleep
 from typing import List, Literal
 
@@ -30,7 +31,7 @@ from .santander_types import (
     TransferPixResult,
 )
 
-from santander_client.api_client.logger import logger
+logger = logging.getLogger("santanderLogger")
 
 PIX_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments"
 MAX_UPDATE_STATUS_ATTEMPTS = 10

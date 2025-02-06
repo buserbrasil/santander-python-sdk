@@ -1,5 +1,6 @@
 from decimal import ROUND_DOWN, Decimal
 from datetime import timezone
+import logging
 from dateutil import tz
 from itertools import cycle
 from typing import Literal
@@ -7,7 +8,7 @@ import re
 import requests
 
 from santander_client.api_client.exceptions import SantanderRequestException, SantanderValueErrorException
-from santander_client.api_client.logger import logger
+logger = logging.getLogger("santanderLogger")
 
 LENGTH_CNPJ = 14
 LENGTH_CPF = 11
