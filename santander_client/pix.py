@@ -16,6 +16,7 @@ from datetime import datetime
 
 from .api_client.helpers import (
     convert_to_decimal,
+    document_type,
     get_pix_key_type,
     retry_one_time_on_request_exception,
     today,
@@ -190,7 +191,7 @@ def _request_create_pix_payment(pix_info: BeneficiaryDataDict, value: D, descrip
                 "branch": pix_info["bank_account"]["agencia"],
                 "number": f"{pix_info['bank_account']['conta']}{pix_info['bank_account']['conta_dv']}",
                 "type": TYPE_ACCOUNT_MAP[pix_info["bank_account"]["tipo_conta"]],
-                "documentType": _document_type(pix_info["bank_account"]["document_number"]),
+                "documentType": document_type(pix_info["bank_account"]["document_number"]),
                 "documentNumber": pix_info["bank_account"]["document_number"],
                 "name": pix_info["recebedor"]["name"],
             }
@@ -209,14 +210,6 @@ def _request_create_pix_payment(pix_info: BeneficiaryDataDict, value: D, descrip
     response = client.post(PIX_ENDPOINT, data=data)
     _check_for_rejected_exception(response, "Criação do pagamento PIX")
     return response
-
-
-def _document_type(document_number: str) -> str:
-    if len(document_number) == 11:
-        return "CPF"
-    if len(document_number) == 14:
-        return "CNPJ"
-    raise SantanderValueErrorException('Unknown document type "{document_number}"')
 
 
 def _request_confirm_pix_payment(pix_payment_id: str, value: D) -> SantanderPixResponse:

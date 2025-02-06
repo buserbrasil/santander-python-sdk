@@ -141,3 +141,11 @@ def retry_one_time_on_request_exception(func):
 
 def convert_to_decimal(cents: int) -> Decimal:
     return Decimal(cents) / 100
+
+
+def document_type(document_number: str) -> str:
+    if len(document_number) == 11:
+        return "CPF"
+    if len(document_number) == 14:
+        return "CNPJ"
+    raise SantanderValueErrorException('Unknown document type "{document_number}"')
