@@ -45,6 +45,7 @@ TYPE_ACCOUNT_MAP = {
 
 SantanderPixResponse = SantanderCreatePixResponse | SantanderAPIErrorResponse
 
+#TODO: Algumas implementações que devem ficar de fora da lib vão ser movidas para o projeto que a utiliza
 
 def criar_transfer(payment_dict: dict, payment_date, tags: List, *args, **kwargs) -> str:
     if not can_pay_now(payment_date):
@@ -102,9 +103,6 @@ def transfer_pix_payment(pix_info: str | BeneficiaryDataDict, value: D, descript
         error_message = str(e)
         logger.error(error_message)
         return {"success": False, "error": error_message}
-
-
-
 
 
 def _pix_payment_status_polling(
