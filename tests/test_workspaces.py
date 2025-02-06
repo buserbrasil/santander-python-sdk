@@ -8,7 +8,7 @@ from santander_client.api_client.workspaces import (
     _check_client_instance,
 )
 from santander_client.api_client.client import SantanderApiClient
-from tests.mock.santander_mocker import (
+from mock.santander_mocker import (
     no_payments_workspaces_mock,
     workspace_response_mock,
 )
