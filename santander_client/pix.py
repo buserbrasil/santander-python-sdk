@@ -47,31 +47,6 @@ TYPE_ACCOUNT_MAP = {
 
 SantanderPixResponse = SantanderCreatePixResponse | SantanderAPIErrorResponse
 
-#TODO: Algumas implementações que devem ficar de fora da lib vão ser movidas para o projeto que a utiliza
-
-def criar_transfer(payment_dict: dict, payment_date, tags: List, *args, **kwargs) -> str:
-    if not can_pay_now(payment_date):
-        raise SantanderPaymentException("Apenas pagamentos com payment_date igual a hoje podem ser pagos por este fluxo (estamos implementando o agendamento)")
-    value = convert_to_decimal(payment_dict.get("amount", 0))
-    transfer_pix_result = transfer_pix_payment(payment_dict, value, payment_dict["description"], tags)
-
-    if not transfer_pix_result["success"]:
-        raise SantanderPaymentException(transfer_pix_result["error"])
-
-    return transfer_pix_result["data"]["id"]
-
-
-def can_pay_now(payment_date: str) -> bool:
-    data = datetime.strptime(payment_date, '%Y-%m-%d').date()
-    return data == today()
-
-
-def get_transfer(bank_request_id: str, *args, **kwargs) -> SantanderPixStatusResponse:
-    """bank_request_id == id do pagamento no santander"""
-    client = get_client()
-    response = client.get(f"{PIX_ENDPOINT}/{bank_request_id}")
-    return response
-
 def transfer_pix_payment(pix_info: str | BeneficiaryDataDict, value: D, description: str, tags=[]) -> TransferPixResult:
     """Realiza uma transferência PIX para uma chave PIX ou para um beneficiário
         -   Se for informado uma chave PIX, o valor deve ser uma string com a chave CPF, CNPJ, EMAIL, CELULAR ou chave aleatória
