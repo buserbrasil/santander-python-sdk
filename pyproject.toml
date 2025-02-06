@@ -22,7 +22,10 @@ classifiers = [
 
   "Programming Language :: Python :: 3.11"
 ]
-dependencies = ["requests>=2"]
+dependencies = [
+    "python-dateutil~=2.0",
+    "requests>=2",
+]
 
 [project.urls]
 homepage = "https://github.com/buserbrasil/santander-python-sdk"
@@ -33,5 +36,6 @@ package = true
 dev-dependencies = [
     "pytest>=7.0.0",
     "requests-mock>=1.10.0",
-    "pytest-cov>=4.0.0"
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.14.0",
 ]
