@@ -1,0 +1,39 @@
+[project]
+name = "santander-python-sdk"
+dynamic = ["version"]
+description = "Client não oficial da API do Santander em Python"
+authors = [
+    { name = "Samuel Rodrigues Coelho", email = "samuel.coelho@buser.com.br" }
+]
+readme = "README.md"
+keywords = ["santander", "api", "client", "python"]
+requires-python = ">=3.11"
+
+classifiers = [
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 3 - Alpha",
+
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+
+  "License :: OSI Approved :: MIT License",
+
+  "Programming Language :: Python :: 3.11"
+]
+dependencies = ["requests>=2"]
+
+[project.urls]
+homepage = "https://github.com/buserbrasil/santander-client-py"
+repository = "https://github.com/buserbrasil/santander-client-py"
+
+[tool.uv]
+package = true
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "requests-mock>=1.10.0",
+    "pytest-cov>=4.0.0",
+    "django>=3.2",
+    "model_bakery>=1.3.2"
+]
