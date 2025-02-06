@@ -28,7 +28,6 @@ from .santander_types import (
     CreateOrderStatus,
     SantanderAPIErrorResponse,
     SantanderCreatePixResponse,
-    SantanderPixStatusResponse,
     TransferPixResult,
 )
 
