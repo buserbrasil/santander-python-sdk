@@ -85,7 +85,7 @@ class UnitTestExceptions(unittest.TestCase):
                     "Falha na requisição", 400, {"message": "Bad Request"}
                 )
             ),
-            "Falha na requisição: Santander - Falha na requisição - 400 {'message': 'Bad Request'}"
+            "Falha na requisição: Santander - Falha na requisição - 400 {'message': 'Bad Request'}",
         )
         self.assertEqual(
             str(SantanderClientException("Erro no cliente")),

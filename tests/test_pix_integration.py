@@ -1,5 +1,6 @@
 import pytest
 import requests_mock
+from decimal import Decimal
 from santander_client.api_client import set_configuration
 from santander_client.api_client.client_configuration import (
     SantanderClientConfiguration,
@@ -36,7 +37,7 @@ def mock_api(mocker):
 
 def test_transfer_pix_payment_success(mock_api):
     pix_id = "12345"
-    value = 100.00
+    value = Decimal("100.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
     mock_create = mock_create_pix_endpoint(
@@ -49,33 +50,55 @@ def test_transfer_pix_payment_success(mock_api):
         mock_api, pix_id, value, "PAYED", pix_key, "CPF"
     )
     transfer_result = transfer_pix_payment(pix_key, value, description, tags=["teste"])
-    assert transfer_result["success"], "Deveria ter sucesso"
-    assert transfer_result["data"]["status"] == "PAYED", "Deveria ter o status PAYED"
-    assert transfer_result["data"]["paymentValue"] == value, (
-        "Deveria ser o mesmo valor do PIX"
-    )
-    assert transfer_result["data"]["dictCode"] == pix_key, (
-        "Deveria ser a mesma chave PIX"
-    )
-    assert transfer_result["data"]["dictCodeType"] == "CPF", "Deveria ser do tipo CPF"
-    assert transfer_result["data"]["id"] == pix_id, "Deveria ser a mesma ID PIX"
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_confirm.call_count == 1, (
-        "Deveria ter chamado a confirmação do PIX uma vez"
-    )
-    assert mock_status.call_count == 1, "Deveria ter chamado o status do PIX uma vez"
+    assert transfer_result == {
+        "data": {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": "12345",
+            "nominalValue": "100.00",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "100.00",
+            "remittanceInformation": "informação da transferência",
+            "status": "PAYED",
+            "tags": [],
+            "totalValue": "100.00",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "100.00",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        },
+        "success": True,
+    }
+
+    assert mock_create.call_count == 1
+    assert mock_confirm.call_count == 1
+    assert mock_status.call_count == 1
     assert mock_create.request_history[0].json() == {
         "tags": ["teste"],
         "paymentValue": "100.00",
         "remittanceInformation": description,
         "dictCode": pix_key,
         "dictCodeType": "CPF",
-    }, "Deveria ter os dados corretos na criação do PIX"
+    }
 
 
 def test_transfer_pix_payment_timeout_create(mock_api):
     pix_id = "12345"
-    value = 100.00
+    value = Decimal("100.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
 
@@ -87,19 +110,17 @@ def test_transfer_pix_payment_timeout_create(mock_api):
     )
     transfer_result = transfer_pix_payment(pix_key, value, description)
 
-    assert transfer_result["success"] is False, "Não deveria ter sucesso"
-    assert "Limite de tentativas" in transfer_result["error"], (
-        "Deveria ter erro de limite de tentativas"
-    )
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS, (
-        "Deveria ter chamado o status do PIX o máximo de tentativas"
-    )
+    assert transfer_result == {
+        "success": False,
+        "error": "Timeout na atualização do status após várias tentativas: Santander - Limite de tentativas de atualização do status do pagamento PIX atingido",
+    }
+    assert mock_create.call_count == 1
+    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS
 
 
 def test_transfer_pix_payment_timeout_before_authorize(mock_api):
     pix_id = "QAS47FASF5646"
-    value = 123.44
+    value = Decimal("123.44")
     description = "Pagamento Teste"
     pix_key = "12345678909"
 
@@ -114,23 +135,47 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_confirm.call_count == 1, (
-        "Deveria ter chamado a confirmação do PIX uma vez"
-    )
-    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM, (
-        "Deveria chamar o máximo de tentativas"
-    )
-    assert transfer_result["success"] is True, "Deveria ter sucesso"
-    assert transfer_result["data"]["id"] == pix_id, "Deveria ter o ID do PIX"
-    assert transfer_result["data"]["paymentValue"] == value, (
-        "Deveria ser o mesmo valor do PIX"
-    )
+    assert transfer_result == {
+        "success": True,
+        "data": {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": pix_id,
+            "nominalValue": "123.44",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "123.44",
+            "remittanceInformation": "informação da transferência",
+            "status": "PENDING_CONFIRMATION",
+            "tags": [],
+            "totalValue": "123.44",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "123.44",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        },
+    }
+    assert mock_create.call_count == 1
+    assert mock_confirm.call_count == 1
+    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM
 
 
 def test_transfer_pix_payment_rejected_on_create(mock_api):
     pix_id = "QASF4568E48Q"
-    value = 100.00
+    value = Decimal("100.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
 
@@ -139,17 +184,16 @@ def test_transfer_pix_payment_rejected_on_create(mock_api):
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
-    assert transfer_result["success"] is False, "Não deveria ter sucesso"
-    assert (
-        "rejeitado pelo banco na etapa Criação do pagamento PIX"
-        in transfer_result["error"]
-    ), "Deveria ter rejeição"
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
+    assert transfer_result == {
+        "success": False,
+        "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
+    }
+    assert mock_create.call_count == 1
 
 
 def test_transfer_pix_payment_rejected_on_confirm(mock_api):
     pix_id = "5A4SD6Q5W6Q68A"
-    value = 157.00
+    value = Decimal("157.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
 
@@ -164,20 +208,18 @@ def test_transfer_pix_payment_rejected_on_confirm(mock_api):
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
-    assert transfer_result["success"] is False, "Não deveria ter sucesso"
-    assert "rejeitado pelo banco" in transfer_result["error"], (
-        "Deveria ter erro de rejeição"
-    )
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_confirm.call_count == 1, (
-        "Deveria ter chamado a confirmação do PIX uma vez"
-    )
-    assert mock_status.call_count == 0, "Não deveria ter chamado o status do PIX"
+    assert transfer_result == {
+        "success": False,
+        "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
+    }
+    assert mock_create.call_count == 1
+    assert mock_confirm.call_count == 1
+    assert mock_status.call_count == 0
 
 
 def test_transfer_pix_payment_with_beneficiary(mock_api):
     pix_id = "ASF5Q7Q879WQ"
-    value = 59.99
+    value = Decimal("59.99")
     description = "Pagamento Teste"
     john_bank_account = beneficiary_dict_john_cc["bank_account"]
     mock_create = mock_create_pix_endpoint(
@@ -191,41 +233,54 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
     )
 
     transfer_result = transfer_pix_payment(beneficiary_dict_john_cc, value, description)
-    assert transfer_result["success"], "Deveria ter sucesso"
-    assert transfer_result["data"]["status"] == "PAYED", "Deveria ter o status PAYED"
-    assert transfer_result["data"]["paymentValue"] == value, (
-        "Deveria ser o mesmo valor do PIX"
-    )
-    beneficiary = transfer_result["data"]["beneficiary"]
-    assert (
-        beneficiary["branch"] == beneficiary_dict_john_cc["bank_account"]["agencia"]
-    ), "Deveria ser a mesma a agência"
-    assert (
-        beneficiary["number"]
-        == f"{john_bank_account['conta']}{john_bank_account['conta_dv']}"
-    ), "A conta não bate"
-    assert beneficiary["type"] == john_bank_account["tipo_conta"], "Conta não bate"
-    assert beneficiary["documentType"] == "CPF"
-    assert beneficiary["documentNumber"] == john_bank_account["document_number"], (
-        "doc não bate"
-    )
-    assert beneficiary["name"] == beneficiary_dict_john_cc["recebedor"]["name"], (
-        "Deveria ser o mesmo nome"
-    )
-    assert beneficiary["bankCode"] == john_bank_account["bank_code_compe"], (
-        "cod banco não bate"
-    )
-    assert beneficiary.get("ispb") is None, "Não deveria ser a mesmo ISPB"
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_status.call_count == 1, "Deveria ter chamado o status do PIX uma vez"
-    assert mock_confirm.call_count == 1, (
-        "Deveria ter chamado a confirmação do PIX uma vez"
-    )
+    assert transfer_result == {
+        "success": True,
+        "data": {
+            "addedValue": "0.00",
+            "beneficiary": {
+                "branch": beneficiary_dict_john_cc["bank_account"]["agencia"],
+                "number": f"{john_bank_account['conta']}{john_bank_account['conta_dv']}",
+                "type": john_bank_account["tipo_conta"],
+                "documentType": "CPF",
+                "documentNumber": john_bank_account["document_number"],
+                "name": beneficiary_dict_john_cc["recebedor"]["name"],
+                "bankCode": john_bank_account["bank_code_compe"],
+            },
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "id": "ASF5Q7Q879WQ",
+            "nominalValue": "59.99",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "59.99",
+            "remittanceInformation": "informação da transferência",
+            "status": "PAYED",
+            "tags": [],
+            "totalValue": "59.99",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "59.99",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        },
+    }
+    assert mock_create.call_count == 1
+    assert mock_status.call_count == 1
+    assert mock_confirm.call_count == 1
 
 
 def test_transfer_pix_payment_lazy_status_update(mock_api):
     pix_id = "12345"
-    value = 130000.00
+    value = Decimal("130000.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
 
@@ -262,16 +317,39 @@ def test_transfer_pix_payment_lazy_status_update(mock_api):
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
-    assert transfer_result["success"], "Deveria ter sucesso"
-    assert transfer_result["data"]["status"] == "PAYED", "Deveria ter o status PAYED"
-    assert transfer_result["data"]["paymentValue"] == value, (
-        "Deveria ser o mesmo valor do PIX"
-    )
-    assert transfer_result["data"]["dictCode"] == pix_key, "Deveria ter a chave PIX"
-    assert transfer_result["data"]["dictCodeType"] == "CPF", (
-        "Deveria ter o tipo de chave CPF"
-    )
-    assert transfer_result["data"]["id"] == pix_id, "Deveria ter o ID do PIX"
+    assert transfer_result == {
+        "success": True,
+        "data": {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": pix_key,
+            "dictCodeType": "CPF",
+            "id": pix_id,
+            "nominalValue": str(value),
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": str(value),
+            "remittanceInformation": "informação da transferência",
+            "status": "PAYED",
+            "tags": [],
+            "totalValue": str(value),
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": str(value),
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        },
+    }
     assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
     assert mock_confirm.call_count == 1, (
         "Deveria ter chamado a confirmação do PIX uma vez"

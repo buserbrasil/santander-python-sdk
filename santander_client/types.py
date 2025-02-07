@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Any
 
 
 class SantanderAPIErrorsFields(TypedDict):
@@ -197,20 +197,22 @@ class SantanderPixStatusResponse(TypedDict):
     beneficiary: SantanderBeneficiary | None
 
 
+class BankAccountDict(TypedDict):
+    agencia: str
+    conta: str
+    conta_dv: str
+    tipo_conta: Literal["checking", "savings", "salary", "payment"]
+    document_number: str
+    bank_code_compe: str | None
+    bank_code_ispb: str | None
+
+
+class ReceiverDataDict(BankAccountDict):
+    name: str
+
+
 class BeneficiaryDataDict(TypedDict):
     """Dados do beneficiário para transferência PIX"""
-
-    class BankAccountDict(TypedDict):
-        agencia: str
-        conta: str
-        conta_dv: str
-        tipo_conta: Literal["checking", "savings", "salary", "payment"]
-        document_number: str
-        bank_code_compe: str | None
-        bank_code_ispb: str | None
-
-    class ReceiverDataDict(BankAccountDict):
-        name: str
 
     "Dados do recebedor para transferência PIX"
     bank_account: BankAccountDict
@@ -220,3 +222,4 @@ class BeneficiaryDataDict(TypedDict):
 class TransferPixResult(TypedDict):
     success: bool
     data: SantanderPixStatusResponse | None
+    error: Any | None

@@ -1,7 +1,7 @@
 from decimal import Decimal as D
 import logging
 from time import sleep
-from typing import List, Literal
+from typing import List, Literal, cast
 
 from santander_client.api_client import get_client
 from santander_client.api_client.exceptions import (
@@ -209,7 +209,7 @@ def _request_create_pix_payment(
         raise SantanderValueErrorException("Chave PIX ou Beneficiário não informado")
 
     client = get_client()
-    response = client.post(PIX_ENDPOINT, data=data)
+    response = cast(SantanderPixResponse, client.post(PIX_ENDPOINT, data=data))
     _check_for_rejected_exception(response, "Criação do pagamento PIX")
     return response
 

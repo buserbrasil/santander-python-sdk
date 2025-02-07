@@ -44,9 +44,36 @@ class UnitTestPix(unittest.TestCase):
                 response = _request_create_pix_payment(
                     key_value, D("123"), "Pagamento Teste", tags=tags
                 )
-                self.assertEqual(response["id"], pix_id)
-                self.assertEqual(response["status"], "PENDING_VALIDATION")
-                self.assertEqual(response["paymentValue"], 123.00)
+                assert response == {
+                    "addedValue": "0.00",
+                    "debitAccount": {
+                        "branch": "0001",
+                        "number": "123456789",
+                    },
+                    "deductedValue": "0.00",
+                    "dictCode": "12345678909",
+                    "dictCodeType": "CPF",
+                    "id": "A5Q41DS5Q5AS4",
+                    "nominalValue": "123",
+                    "obs": "payment mockado",
+                    "payer": {
+                        "documentNumber": "20157935000193",
+                        "documentType": "CPNJ",
+                        "name": "John Doe SA",
+                    },
+                    "paymentValue": "123",
+                    "remittanceInformation": "informação da transferência",
+                    "status": "PENDING_VALIDATION",
+                    "tags": [],
+                    "totalValue": "123",
+                    "transaction": {
+                        "code": "13a654q",
+                        "date": "2025-01-08T13:44:36Z",
+                        "endToEnd": "a213e5q564as456f4as56f",
+                        "value": "123",
+                    },
+                    "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+                }
 
                 expected_body_request = {
                     "tags": tags,
@@ -74,9 +101,43 @@ class UnitTestPix(unittest.TestCase):
         response = _request_create_pix_payment(
             beneficiary_dict_john_cc, value, description, tags=tags
         )
-        self.assertEqual(response["id"], pix_id)
-        self.assertEqual(response["status"], "PENDING_VALIDATION")
-        self.assertEqual(response["paymentValue"], value)
+        assert response == {
+            "addedValue": "0.00",
+            "beneficiary": {
+                "bankCode": "123",
+                "branch": "123",
+                "documentNumber": "12345678909",
+                "documentType": "CPF",
+                "name": "John Doe",
+                "number": "1234567899",
+                "type": "checking",
+            },
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "id": "QAF65E6Q-A2SQ6A-Q5AS-6Q5",
+            "nominalValue": "1248.33",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "1248.33",
+            "remittanceInformation": "informação da transferência",
+            "status": "PENDING_VALIDATION",
+            "tags": [],
+            "totalValue": "1248.33",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "1248.33",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        }
 
         john_bank_account = beneficiary_dict_john_cc["bank_account"]
         expected_body_request = {
@@ -105,18 +166,43 @@ class UnitTestPix(unittest.TestCase):
         mock_client_patch = mock_get_client.return_value.patch
 
         confirm_result = _request_confirm_pix_payment(pix_id, value)
-        self.assertEqual(confirm_result["status"], "PAYED")
-        self.assertEqual(confirm_result["id"], pix_id)
-        self.assertEqual(confirm_result["paymentValue"], value)
-        self.assertEqual(confirm_result["dictCode"], "12345678909")
-        self.assertEqual(confirm_result["dictCodeType"], "CPF")
-
-        expected_body_request = {
-            "paymentValue": str(value),
-            "status": "AUTHORIZED",
+        assert confirm_result == {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": "12345",
+            "nominalValue": "1248.33",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "1248.33",
+            "remittanceInformation": "informação da transferência",
+            "status": "PAYED",
+            "tags": [],
+            "totalValue": "1248.33",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "1248.33",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         }
+
         mock_client_patch.assert_called_with(
-            f"{PIX_ENDPOINT}/{pix_id}", data=expected_body_request
+            f"{PIX_ENDPOINT}/{pix_id}",
+            data={
+                "paymentValue": str(value),
+                "status": "AUTHORIZED",
+            },
         )
 
     @patch("santander_client.pix.get_client")
@@ -143,10 +229,36 @@ class UnitTestPix(unittest.TestCase):
         payment_status = CreateOrderStatus.READY_TO_PAY
 
         confirm_result = _confirm_pix_payment(pix_id, value, payment_status)
-        self.assertEqual(confirm_result["status"], "PAYED")
-        self.assertEqual(confirm_result["paymentValue"], 100.00)
-        self.assertEqual(confirm_result["dictCode"], "12345678909")
-        self.assertEqual(confirm_result["dictCodeType"], "CPF")
+        assert confirm_result == {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": "12345",
+            "nominalValue": "100.00",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "100.00",
+            "remittanceInformation": "informação da transferência",
+            "status": "PAYED",
+            "tags": [],
+            "totalValue": "100.00",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "100.00",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        }
 
     def test_check_for_rejected_exception(self):
         pix_response = {"status": "REJECTED"}
@@ -182,12 +294,39 @@ class UnitTestPix(unittest.TestCase):
         transfer_result = transfer_pix_payment(
             pix_key, value, "Pagamento Teste", tags=tags
         )
-        self.assertTrue(transfer_result["success"])
-        self.assertEqual(transfer_result["data"]["status"], "PAYED")
-        self.assertEqual(transfer_result["data"]["paymentValue"], value)
-        self.assertEqual(transfer_result["data"]["dictCode"], "12345678909")
-        self.assertEqual(transfer_result["data"]["dictCodeType"], "CPF")
-        self.assertEqual(transfer_result["data"]["id"], pix_id)
+        assert transfer_result == {
+            "data": {
+                "addedValue": "0.00",
+                "debitAccount": {
+                    "branch": "0001",
+                    "number": "123456789",
+                },
+                "deductedValue": "0.00",
+                "dictCode": "12345678909",
+                "dictCodeType": "CPF",
+                "id": "2A1F6556Q6AS",
+                "nominalValue": "100.00",
+                "obs": "payment mockado",
+                "payer": {
+                    "documentNumber": "20157935000193",
+                    "documentType": "CPNJ",
+                    "name": "John Doe SA",
+                },
+                "paymentValue": "100.00",
+                "remittanceInformation": "informação da transferência",
+                "status": "PAYED",
+                "tags": [],
+                "totalValue": "100.00",
+                "transaction": {
+                    "code": "13a654q",
+                    "date": "2025-01-08T13:44:36Z",
+                    "endToEnd": "a213e5q564as456f4as56f",
+                    "value": "100.00",
+                },
+                "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+            },
+            "success": True,
+        }
         mock_get_client.return_value.post.assert_called_with(
             "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments",
             data=expected_post_data,
