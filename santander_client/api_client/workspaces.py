@@ -33,7 +33,7 @@ def get_first_workspace_id_of_type(
 ) -> str | None:
     _check_client_instance(client)
     workspaces = get_workspaces(client)
-    if len(workspaces) == 0:
+    if workspaces is None or len(workspaces) == 0:
         return None
 
     workspace_id = next(

@@ -7,7 +7,7 @@ from requests_mock.adapter import _Matcher as Matcher
 from santander_client.api_client.client import TOKEN_ENDPOINT
 from santander_client.api_client.workspaces import WORKSPACES_ENDPOINT
 from santander_client.pix import PIX_ENDPOINT
-from santander_client.types import BeneficiaryDataDict
+from santander_client.types import BeneficiaryDataDict, OrderStatus
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"
@@ -66,10 +66,15 @@ def get_dict_payment_pix_response(
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
-    if key["bank_account"].get("bank_code_compe"):
-        beneficiary["bankCode"] = key["bank_account"]["bank_code_compe"]
+    bank_account = key["bank_account"]
+    bank_code = bank_account.get("bank_code_compe", "")
+    bank_ispb = bank_account.get("bank_code_ispb", "")
+    if bank_code:
+        beneficiary["bankCode"] = bank_code
+    elif bank_ispb:
+        beneficiary["ispb"] = bank_ispb
     else:
-        beneficiary["ispb"] = key["bank_account"]["bank_code_ispb"]
+        raise ValueError("A chave de entrada é inválida")
     payment.update({"beneficiary": beneficiary})
 
     return payment
@@ -101,10 +106,16 @@ def get_dict_payment_pix_request(
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
-    if key.get("bank_code"):
-        beneficiary["bankCode"] = key["bank_account"]["bank_code_compe"]
+    
+    bank_account = key["bank_account"]
+    bank_code = bank_account.get("bank_code_compe", "")
+    bank_ispb = bank_account.get("bank_code_ispb", "")
+    if bank_code:
+        beneficiary["bankCode"] = bank_code
+    elif bank_ispb:
+        beneficiary["ispb"] = bank_ispb
     else:
-        beneficiary["ispb"] = key["bank_account"]["bank_code_ispb"]
+        raise ValueError("A chave de entrada é inválida")
     payment.update({"beneficiary": beneficiary})
 
     return payment
@@ -233,7 +244,7 @@ beneficiary_dict_john_cc = BeneficiaryDataDict(
 )
 
 payment_response_by_beneficiary = get_dict_payment_pix_response(
-    "12345678", Decimal("299.99"), "READY_TO_PAY", beneficiary_dict_john_cc
+    "12345678", Decimal("299.99"), OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc
 )
 payment_response_by_beneficiary = get_dict_payment_pix_request(
     "12345678", Decimal("299.99"), beneficiary_dict_john_cc

@@ -36,7 +36,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
 
     def __init__(self, config: SantanderClientConfiguration):
         if not isinstance(config, SantanderClientConfiguration):
-            raise SantanderClientConfiguration("Objeto de autenticação inválido")
+            raise SantanderClientException("Objeto de autenticação inválido")
 
         self.base_url = config.base_url.rstrip("/")
         self.config = config

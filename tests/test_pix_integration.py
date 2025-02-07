@@ -21,6 +21,7 @@ from mock.santander_mocker import (
     mock_pix_status_endpoint,
     mock_token_endpoint,
 )
+from santander_client.types import OrderStatus
 
 
 @pytest.fixture
@@ -41,13 +42,13 @@ def test_transfer_pix_payment_success(mock_api):
     description = "Pagamento Teste"
     pix_key = "12345678909"
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, "PAYED", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
     )
     transfer_result = transfer_pix_payment(pix_key, value, description, tags=["teste"])
     assert transfer_result == {
@@ -70,7 +71,7 @@ def test_transfer_pix_payment_success(mock_api):
             },
             "paymentValue": "100.00",
             "remittanceInformation": "informação da transferência",
-            "status": "PAYED",
+            "status": OrderStatus.PAYED,
             "tags": [],
             "totalValue": "100.00",
             "transaction": {
@@ -82,6 +83,7 @@ def test_transfer_pix_payment_success(mock_api):
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "success": True,
+        "error": "",
     }
 
     assert mock_create.call_count == 1
@@ -103,16 +105,17 @@ def test_transfer_pix_payment_timeout_create(mock_api):
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
     )
     transfer_result = transfer_pix_payment(pix_key, value, description)
 
     assert transfer_result == {
         "success": False,
         "error": "Timeout na atualização do status após várias tentativas: Santander - Limite de tentativas de atualização do status do pagamento PIX atingido",
+        "data": None,
     }
     assert mock_create.call_count == 1
     assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS
@@ -125,13 +128,13 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
@@ -156,7 +159,7 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
             },
             "paymentValue": "123.44",
             "remittanceInformation": "informação da transferência",
-            "status": "PENDING_CONFIRMATION",
+            "status": OrderStatus.PENDING_CONFIRMATION,
             "tags": [],
             "totalValue": "123.44",
             "transaction": {
@@ -167,6 +170,7 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
             },
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
+        "error": "",
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -180,13 +184,14 @@ def test_transfer_pix_payment_rejected_on_create(mock_api):
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "REJECTED", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
+        "data": None
     }
     assert mock_create.call_count == 1
 
@@ -198,19 +203,20 @@ def test_transfer_pix_payment_rejected_on_confirm(mock_api):
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, "REJECTED", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, "REJECTED", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
     transfer_result = transfer_pix_payment(pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
+        "data": None
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -223,13 +229,13 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
     description = "Pagamento Teste"
     john_bank_account = beneficiary_dict_john_cc["bank_account"]
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "PENDING_VALIDATION", beneficiary_dict_john_cc
+        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, beneficiary_dict_john_cc
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, "READY_TO_PAY", beneficiary_dict_john_cc
+        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, "PAYED", beneficiary_dict_john_cc
+        mock_api, pix_id, value, OrderStatus.PAYED, beneficiary_dict_john_cc
     )
 
     transfer_result = transfer_pix_payment(beneficiary_dict_john_cc, value, description)
@@ -261,7 +267,7 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
             },
             "paymentValue": "59.99",
             "remittanceInformation": "informação da transferência",
-            "status": "PAYED",
+            "status": OrderStatus.PAYED,
             "tags": [],
             "totalValue": "59.99",
             "transaction": {
@@ -272,6 +278,7 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
             },
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
+        "error": "",
     }
     assert mock_create.call_count == 1
     assert mock_status.call_count == 1
@@ -285,32 +292,32 @@ def test_transfer_pix_payment_lazy_status_update(mock_api):
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, "PAYED", pix_key, "CPF"
+        mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
     )
     mock_status = mock_api.get(
         f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
         [
             {
                 "json": get_dict_payment_pix_response(
-                    pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
+                    pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
                 )
             },
             {
                 "json": get_dict_payment_pix_response(
-                    pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
+                    pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
                 )
             },
             {
                 "json": get_dict_payment_pix_response(
-                    pix_id, value, "READY_TO_PAY", pix_key, "CPF"
+                    pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
                 )
             },
             {
                 "json": get_dict_payment_pix_response(
-                    pix_id, value, "READY_TO_PAY", pix_key, "CPF"
+                    pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
                 )
             },
         ],
@@ -338,7 +345,7 @@ def test_transfer_pix_payment_lazy_status_update(mock_api):
             },
             "paymentValue": str(value),
             "remittanceInformation": "informação da transferência",
-            "status": "PAYED",
+            "status": OrderStatus.PAYED,
             "tags": [],
             "totalValue": str(value),
             "transaction": {
@@ -349,6 +356,7 @@ def test_transfer_pix_payment_lazy_status_update(mock_api):
             },
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
+        "error": "",
     }
     assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
     assert mock_confirm.call_count == 1, (
