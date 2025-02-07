@@ -3,29 +3,21 @@ name = "santander-python-sdk"
 dynamic = ["version"]
 description = "Client não oficial da API do Santander em Python"
 authors = [
-    { name = "Samuel Rodrigues Coelho", email = "samuel.coelho@buser.com.br" }
+    { name = "Samuel Rodrigues Coelho", email = "samuel.coelho@buser.com.br" },
 ]
 readme = "README.md"
 keywords = ["santander", "api", "client", "python"]
 requires-python = ">=3.11"
 
 classifiers = [
-  #   3 - Alpha
-  #   4 - Beta
-  #   5 - Production/Stable
-  "Development Status :: 3 - Alpha",
-
-  "Intended Audience :: Developers",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-
-  "License :: OSI Approved :: MIT License",
-
-  "Programming Language :: Python :: 3.11"
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
-dependencies = [
-    "python-dateutil~=2.0",
-    "requests>=2",
-]
+dependencies = ["python-dateutil~=2.0", "requests>=2"]
 
 [project.urls]
 homepage = "https://github.com/buserbrasil/santander-python-sdk"
@@ -38,4 +30,8 @@ dev-dependencies = [
     "requests-mock>=1.10.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.14.0",
+    "ruff>=0.9.5",
 ]
+
+[tool.ruff.lint]
+flake8-tidy-imports.ban-relative-imports = "all"

@@ -28,14 +28,21 @@ def get_workspaces(client: SantanderAbstractApiClient):
     return response.get("_content", None)
 
 
-def get_first_workspace_id_of_type(client: SantanderAbstractApiClient, workspace_type: WorkspaceType) -> str | None:
+def get_first_workspace_id_of_type(
+    client: SantanderAbstractApiClient, workspace_type: WorkspaceType
+) -> str | None:
     _check_client_instance(client)
     workspaces = get_workspaces(client)
     if len(workspaces) == 0:
         return None
 
     workspace_id = next(
-        (w["id"] for w in workspaces if w.get("type") == workspace_type and w.get("status") == "ACTIVE"), None
+        (
+            w["id"]
+            for w in workspaces
+            if w.get("type") == workspace_type and w.get("status") == "ACTIVE"
+        ),
+        None,
     )
     return workspace_id
 
@@ -45,4 +52,6 @@ def _check_client_instance(client):
         raise SantanderClientException("O client é obrigatório")
 
     if not issubclass(client.__class__, SantanderAbstractApiClient):
-        raise SantanderClientException("O client deve ser uma instância de Herança de BaseSantanderApiClient")
+        raise SantanderClientException(
+            "O client deve ser uma instância de Herança de BaseSantanderApiClient"
+        )

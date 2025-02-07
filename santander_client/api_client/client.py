@@ -62,7 +62,8 @@ class SantanderApiClient(SantanderAbstractApiClient):
     @property
     def is_authenticated(self) -> bool:
         return bool(
-            self.token and (self.token_expires_at - BEFORE_EXPIRE_TOKEN_SECONDS) > datetime.now()
+            self.token
+            and (self.token_expires_at - BEFORE_EXPIRE_TOKEN_SECONDS) > datetime.now()
         )
 
     def _ensure_requirements(self) -> None:
@@ -75,7 +76,9 @@ class SantanderApiClient(SantanderAbstractApiClient):
         if not self.token:
             raise SantanderClientException("Token de autenticação não encontrado")
 
-        self.token_expires_at = datetime.now() + timedelta(seconds=token_data.get("expires_in", 120))
+        self.token_expires_at = datetime.now() + timedelta(
+            seconds=token_data.get("expires_in", 120)
+        )
         self.session.headers = {
             "Authorization": f"Bearer {self.token}",
             "X-Application-Key": self.config.client_id,
@@ -93,13 +96,20 @@ class SantanderApiClient(SantanderAbstractApiClient):
         }
         try:
             response = self.session.post(
-                url, data=data, headers=headers, verify=True, timeout=60, cert=self.config.cert
+                url,
+                data=data,
+                headers=headers,
+                verify=True,
+                timeout=60,
+                cert=self.config.cert,
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             status_code = getattr(e.response, "status_code", None)
             response = try_parse_response_to_json(e.response)
-            raise SantanderRequestException(f"Erro na obtenção do Token: {e}", status_code, response)
+            raise SantanderRequestException(
+                f"Erro na obtenção do Token: {e}", status_code, response
+            )
         token_data = response.json()
         return token_data
 
@@ -112,12 +122,16 @@ class SantanderApiClient(SantanderAbstractApiClient):
             url = url.replace(":workspaceid", self.config.workspace_id)
         return url
 
-    def _request(self, method: str, endpoint: str, data: dict = None, params: dict = None) -> dict:
+    def _request(
+        self, method: str, endpoint: str, data: dict = None, params: dict = None
+    ) -> dict:
         self._ensure_requirements()
         url = self._prepare_url(endpoint)
 
         try:
-            response = self.session.request(method, url, json=data, params=params, timeout=60)
+            response = self.session.request(
+                method, url, json=data, params=params, timeout=60
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -125,6 +139,8 @@ class SantanderApiClient(SantanderAbstractApiClient):
             error_content = try_parse_response_to_json(e.response)
             status_description = get_status_code_description(status_code)
 
-            raise SantanderRequestException(status_description, status_code, error_content)
+            raise SantanderRequestException(
+                status_description, status_code, error_content
+            )
         except Exception as e:
             raise SantanderRequestException(f"Erro na requisição: {e}", None, None)

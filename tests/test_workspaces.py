@@ -46,7 +46,9 @@ class UnitTestWorkspaces(unittest.TestCase):
     def test_get_first_workspace_id_of_type_no_match(self):
         with patch(
             "santander_client.api_client.workspaces.get_workspaces",
-            return_value=no_payments_workspaces_mock["_content"],  # Corrigir erro de digitação
+            return_value=no_payments_workspaces_mock[
+                "_content"
+            ],  # Corrigir erro de digitação
         ):
             workspace_id = get_first_workspace_id_of_type(self.mock_client, "PAYMENTS")
             self.assertIsNone(workspace_id)

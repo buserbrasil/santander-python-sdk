@@ -1,4 +1,3 @@
-import base64
 from decimal import Decimal
 from urllib.parse import urljoin
 
@@ -9,12 +8,19 @@ from santander_client.api_client.workspaces import WORKSPACES_ENDPOINT
 from santander_client.pix import PIX_ENDPOINT
 from santander_client.santander_types import BeneficiaryDataDict
 
-SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"  
+SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"
-PIX_ENDPOINT_WITH_WORKSPACE = urljoin(SANTANDER_URL, PIX_ENDPOINT.replace(":workspaceid", TEST_WORKSPACE_ID))
+PIX_ENDPOINT_WITH_WORKSPACE = urljoin(
+    SANTANDER_URL, PIX_ENDPOINT.replace(":workspaceid", TEST_WORKSPACE_ID)
+)
+
 
 def get_dict_payment_pix_response(
-    id: str, value: Decimal, status: str, key: str | BeneficiaryDataDict = "12345678909", key_type: str = "CPF"
+    id: str,
+    value: Decimal,
+    status: str,
+    key: str | BeneficiaryDataDict = "12345678909",
+    key_type: str = "CPF",
 ) -> dict:
     payment = {
         "obs": "payment mockado",
@@ -31,7 +37,11 @@ def get_dict_payment_pix_response(
         "deductedValue": "0.00",
         "addedValue": "0.00",
         "totalValue": value,
-        "payer": {"name": "John Doe SA", "documentType": "CPNJ", "documentNumber": "20157935000193"},
+        "payer": {
+            "name": "John Doe SA",
+            "documentType": "CPNJ",
+            "documentNumber": "20157935000193",
+        },
         "transaction": {
             "value": value,
             "code": "13a654q",
@@ -49,7 +59,9 @@ def get_dict_payment_pix_response(
         "branch": key["bank_account"]["agencia"],
         "number": f"{key['bank_account']['conta']}{key['bank_account']['conta_dv']}",
         "type": key["bank_account"]["tipo_conta"],
-        "documentType": "CPNJ" if len(key["bank_account"]["document_number"]) > 11 else "CPF",
+        "documentType": "CPNJ"
+        if len(key["bank_account"]["document_number"]) > 11
+        else "CPF",
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
@@ -62,7 +74,9 @@ def get_dict_payment_pix_response(
     return payment
 
 
-def get_dict_payment_pix_request(id: str, value: str, key: str | BeneficiaryDataDict, key_type: str = "") -> dict:
+def get_dict_payment_pix_request(
+    id: str, value: str, key: str | BeneficiaryDataDict, key_type: str = ""
+) -> dict:
     payment = {
         "paymentValue": value,
         "remittanceInformation": "informação da transferência",
@@ -77,7 +91,9 @@ def get_dict_payment_pix_request(id: str, value: str, key: str | BeneficiaryData
         "branch": key["bank_account"]["agencia"],
         "number": f"{key['bank_account']['conta']}{key['bank_account']['conta_dv']}",
         "type": key["bank_account"]["tipo_conta"],
-        "documentType": "CPNJ" if len(key["bank_account"]["document_number"]) > 11 else "CPF",
+        "documentType": "CPNJ"
+        if len(key["bank_account"]["document_number"]) > 11
+        else "CPF",
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
@@ -90,7 +106,9 @@ def get_dict_payment_pix_request(id: str, value: str, key: str | BeneficiaryData
     return payment
 
 
-def get_dict_workspace_response(id: str, type: str, status: str, creation_date: str) -> dict:
+def get_dict_workspace_response(
+    id: str, type: str, status: str, creation_date: str
+) -> dict:
     return {
         "obs": "workspace mockado",
         "id": id,
@@ -143,26 +161,44 @@ def mock_create_pix_endpoint(
     pix_info: str | BeneficiaryDataDict,
     key_type: str = "CPF",
 ) -> Mocker:
-    post_response = get_dict_payment_pix_response(pix_id, value, status, pix_info, key_type)
+    post_response = get_dict_payment_pix_response(
+        pix_id, value, status, pix_info, key_type
+    )
     return mocker.post(PIX_ENDPOINT_WITH_WORKSPACE, json=post_response)
 
 
 def mock_confirm_pix_endpoint(
-    mocker: Mocker, pix_id: str, value: Decimal, status: str, pix_info: str | BeneficiaryDataDict, key_type: str = "CPF"
+    mocker: Mocker,
+    pix_id: str,
+    value: Decimal,
+    status: str,
+    pix_info: str | BeneficiaryDataDict,
+    key_type: str = "CPF",
 ) -> Mocker:
-    patch_response = get_dict_payment_pix_response(pix_id, value, status, pix_info, key_type)
+    patch_response = get_dict_payment_pix_response(
+        pix_id, value, status, pix_info, key_type
+    )
     return mocker.patch(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=patch_response)
 
 
 def mock_pix_status_endpoint(
-    mocker: Mocker, pix_id: str, value: Decimal, status: str, pix_info: str | BeneficiaryDataDict, key_type: str = "CPF"
+    mocker: Mocker,
+    pix_id: str,
+    value: Decimal,
+    status: str,
+    pix_info: str | BeneficiaryDataDict,
+    key_type: str = "CPF",
 ) -> Mocker:
-    get_response = get_dict_payment_pix_response(pix_id, value, status, pix_info, key_type)
+    get_response = get_dict_payment_pix_response(
+        pix_id, value, status, pix_info, key_type
+    )
     return mocker.get(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=get_response)
 
 
 def mock_get_workspaces_endpoint(mocker: Mocker) -> Mocker:
-    return mocker.get(urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT), json=workspace_response_mock)
+    return mocker.get(
+        urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT), json=workspace_response_mock
+    )
 
 
 def mock_token_endpoint(mocker: Mocker) -> Mocker:
@@ -188,7 +224,9 @@ beneficiary_dict_john_cc = BeneficiaryDataDict(
 payment_response_by_beneficiary = get_dict_payment_pix_response(
     "12345678", 299.99, "READY_TO_PAY", beneficiary_dict_john_cc
 )
-payment_response_by_beneficiary = get_dict_payment_pix_request("12345678", 299.99, beneficiary_dict_john_cc)
+payment_response_by_beneficiary = get_dict_payment_pix_request(
+    "12345678", 299.99, beneficiary_dict_john_cc
+)
 
 
 workspace_digital_corban = get_dict_workspace_response(
@@ -199,10 +237,18 @@ workspace_digital_corban = get_dict_workspace_response(
 )
 
 
-workspace_physical_corban = get_dict_workspace_response("3870baea", "PHYSICAL_CORBAN", "ACTIVE", "2025-01-07T15:00:15Z")
-workspace_payments_active = get_dict_workspace_response(TEST_WORKSPACE_ID, "PAYMENTS", "ACTIVE", "2025-01-07T15:00:15Z")
-workspace_payments_active2 = get_dict_workspace_response("12345678", "PAYMENTS", "ACTIVE", "2025-02-01T12:00:00Z")
-workspace_payments_disabled = get_dict_workspace_response("3870ba5d", "PAYMENTS", "DISABLED", "2025-01-07T15:00:15Z")
+workspace_physical_corban = get_dict_workspace_response(
+    "3870baea", "PHYSICAL_CORBAN", "ACTIVE", "2025-01-07T15:00:15Z"
+)
+workspace_payments_active = get_dict_workspace_response(
+    TEST_WORKSPACE_ID, "PAYMENTS", "ACTIVE", "2025-01-07T15:00:15Z"
+)
+workspace_payments_active2 = get_dict_workspace_response(
+    "12345678", "PAYMENTS", "ACTIVE", "2025-02-01T12:00:00Z"
+)
+workspace_payments_disabled = get_dict_workspace_response(
+    "3870ba5d", "PAYMENTS", "DISABLED", "2025-01-07T15:00:15Z"
+)
 workspace_response_mock = {
     "_content": [
         workspace_digital_corban,
@@ -214,7 +260,11 @@ workspace_response_mock = {
 }
 
 no_payments_workspaces_mock = {
-    "_content": [workspace_digital_corban, workspace_physical_corban, workspace_payments_disabled]
+    "_content": [
+        workspace_digital_corban,
+        workspace_physical_corban,
+        workspace_payments_disabled,
+    ]
 }
 
 cert_mock_content = "a" * 512
@@ -249,7 +299,7 @@ invalid_config_cases = [
 client_santander_client_config_mock = {
     "client_id": "a1e23a135e4a4e35ae",
     "client_secret": "E56q6ASf3e8844",
-    "cert": 'temp_cert.pem',
+    "cert": "temp_cert.pem",
     "workspace_id": TEST_WORKSPACE_ID,
     "base_url": SANTANDER_URL,
 }

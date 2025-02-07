@@ -42,7 +42,10 @@ TYPE_ACCOUNT_MAP = {
 
 SantanderPixResponse = SantanderCreatePixResponse | SantanderAPIErrorResponse
 
-def transfer_pix_payment(pix_info: str | BeneficiaryDataDict, value: D, description: str, tags=[]) -> TransferPixResult:
+
+def transfer_pix_payment(
+    pix_info: str | BeneficiaryDataDict, value: D, description: str, tags=[]
+) -> TransferPixResult:
     """Realiza uma transferência PIX para uma chave PIX ou para um beneficiário
         -   Se for informado uma chave PIX, o valor deve ser uma string com a chave CPF, CNPJ, EMAIL, CELULAR ou chave aleatória
         -   CELULAR deve ser informado no formato +5511912345678 (14 caracteres incluindo o +)
@@ -58,15 +61,21 @@ def transfer_pix_payment(pix_info: str | BeneficiaryDataDict, value: D, descript
     """
     try:
         if not value > 0:
-            raise SantanderValueErrorException(f"Valor inválido para transferência PIX: {value}")
+            raise SantanderValueErrorException(
+                f"Valor inválido para transferência PIX: {value}"
+            )
 
-        create_pix_response = _request_create_pix_payment(pix_info, value, description, tags)
+        create_pix_response = _request_create_pix_payment(
+            pix_info, value, description, tags
+        )
         pix_id = create_pix_response.get("id")
         logger.info("Santander - PIX criado com sucesso: {pix_id}")
         payment_status = create_pix_response.get("status")
 
         if not pix_id:
-            raise SantanderClientException("ID do pagamento PIX não foi retornada pela criação do pagamento")
+            raise SantanderClientException(
+                "ID do pagamento PIX não foi retornada pela criação do pagamento"
+            )
 
         confirm_response = _confirm_pix_payment(pix_id, value, payment_status)
 
@@ -78,19 +87,25 @@ def transfer_pix_payment(pix_info: str | BeneficiaryDataDict, value: D, descript
 
 
 def _pix_payment_status_polling(
-    pix_id: str, until_status: List[str], context: Literal["CREATE", "CONFIRM"], max_attempts: int
+    pix_id: str,
+    until_status: List[str],
+    context: Literal["CREATE", "CONFIRM"],
+    max_attempts: int,
 ) -> SantanderPixResponse:
     for attempt in range(max_attempts):
         response = _request_pix_payment_status(pix_id, context)
         payment_status = response.get("status")
-        logger.info(f"Santander - Verificando status do pagamento PIX por polling: {pix_id} - {payment_status}")
+        logger.info(
+            f"Santander - Verificando status do pagamento PIX por polling: {pix_id} - {payment_status}"
+        )
 
         if payment_status in until_status:
             break
 
         if attempt == max_attempts - 1:
             raise SantanderTimeoutToChangeStatusException(
-                "Limite de tentativas de atualização do status do pagamento PIX atingido", context
+                "Limite de tentativas de atualização do status do pagamento PIX atingido",
+                context,
             )
 
         sleep(PIX_CONFIRM_INTERVAL_TIME)
@@ -98,7 +113,9 @@ def _pix_payment_status_polling(
     return response
 
 
-def _confirm_pix_payment(pix_id: str, value: D, payment_status: CreateOrderStatus) -> SantanderPixResponse:
+def _confirm_pix_payment(
+    pix_id: str, value: D, payment_status: CreateOrderStatus
+) -> SantanderPixResponse:
     """Confirma o pagamento PIX, realizando polling até que o status seja PAYED ou permaneça PENDING_CONFIRMATION.
 
     Exceções lançadas:
@@ -118,14 +135,18 @@ def _confirm_pix_payment(pix_id: str, value: D, payment_status: CreateOrderStatu
     try:
         confirm_response = _request_confirm_pix_payment(pix_id, value)
     except SantanderRequestException as e:
-        logger.error(f"Santander - Erro ao confirmar pagamento PIX: {str(e)}, {pix_id}, verificando status atual")
+        logger.error(
+            f"Santander - Erro ao confirmar pagamento PIX: {str(e)}, {pix_id}, verificando status atual"
+        )
         confirm_response = _request_pix_payment_status(pix_id, "CONFIRM")
-     
+
     if confirm_response.get("status") == ConfirmOrderStatus.PAYED:
         return confirm_response
 
     if not confirm_response.get("status") == ConfirmOrderStatus.PENDING_CONFIRMATION:
-        raise SantanderClientException(f"Status inesperado após confirmação: {confirm_response.get('status')} {pix_id}")
+        raise SantanderClientException(
+            f"Status inesperado após confirmação: {confirm_response.get('status')} {pix_id}"
+        )
 
     try:
         confirm_response = _pix_payment_status_polling(
@@ -138,13 +159,18 @@ def _confirm_pix_payment(pix_id: str, value: D, payment_status: CreateOrderStatu
         """ Situação improvável aqui: Após longa espera depois do envio da autorização e confirmação de recebimento da autorização,
         não houve rejeição, mas também não houve atualização final de status mesmo após longa espera.
         Essa decisão pode evitar prejuízos de pagamentos duplicados devido a instabilidades do Santander ou da câmara de compensação."""
-        logger.info(f"Santander - Houve timeout na atualização do status de pago do pagamento PIX:", str(e))
+        logger.info(
+            "Santander - Houve timeout na atualização do status de pago do pagamento PIX:",
+            str(e),
+        )
         return confirm_response
 
     return confirm_response
 
 
-def _request_create_pix_payment(pix_info: BeneficiaryDataDict, value: D, description: str, tags=[]) -> SantanderPixResponse:
+def _request_create_pix_payment(
+    pix_info: BeneficiaryDataDict, value: D, description: str, tags=[]
+) -> SantanderPixResponse:
     """Cria uma ordem de pagamento. Caso o status seja REJECTED, a exceção SantanderRejectedTransactionException é lançada.
     Regra de negócio aqui: pagamento por beneficiário na request deve ser informado o bank_code ou ispb, nunca os dois."""
     data = {
@@ -161,18 +187,24 @@ def _request_create_pix_payment(pix_info: BeneficiaryDataDict, value: D, descrip
                 "branch": pix_info["bank_account"]["agencia"],
                 "number": f"{pix_info['bank_account']['conta']}{pix_info['bank_account']['conta_dv']}",
                 "type": TYPE_ACCOUNT_MAP[pix_info["bank_account"]["tipo_conta"]],
-                "documentType": document_type(pix_info["bank_account"]["document_number"]),
+                "documentType": document_type(
+                    pix_info["bank_account"]["document_number"]
+                ),
                 "documentNumber": pix_info["bank_account"]["document_number"],
                 "name": pix_info["recebedor"]["name"],
             }
             if pix_info.get("bank_account"):
                 if pix_info["bank_account"].get("bank_code_compe"):
-                    beneficiary["bankCode"] = pix_info["bank_account"]["bank_code_compe"]
+                    beneficiary["bankCode"] = pix_info["bank_account"][
+                        "bank_code_compe"
+                    ]
                 else:
                     beneficiary["ispb"] = pix_info["bank_account"]["bank_code_ispb"]
             data.update({"beneficiary": beneficiary})
         except KeyError as e:
-            raise SantanderValueErrorException(f"Campo obrigatório não informado para o beneficiário: {e}")
+            raise SantanderValueErrorException(
+                f"Campo obrigatório não informado para o beneficiário: {e}"
+            )
     else:
         raise SantanderValueErrorException("Chave PIX ou Beneficiário não informado")
 
@@ -204,7 +236,9 @@ def _request_confirm_pix_payment(pix_payment_id: str, value: D) -> SantanderPixR
 
 
 @retry_one_time_on_request_exception
-def _request_pix_payment_status(pix_payment_id: str, step_description: str) -> SantanderPixResponse:
+def _request_pix_payment_status(
+    pix_payment_id: str, step_description: str
+) -> SantanderPixResponse:
     """
     Retorna o estado atual do processamento de um pagamento PIX
     O HTTP code de retorno é 200, com o status atual do pagamento
@@ -222,6 +256,9 @@ def _request_pix_payment_status(pix_payment_id: str, step_description: str) -> S
 def _check_for_rejected_exception(pix_response: SantanderPixResponse, step: str):
     """Uma transação quando rejeitada com status REJECTED, não deve ser continuada"""
     if pix_response.get("status") == "REJECTED":
-        reject_reason = pix_response.get("rejectReason", "Motivo não retornado pelo Santander")
-        raise SantanderRejectedTransactionException(f"Pagamento rejeitado pelo banco na etapa {step} - {reject_reason}")
-
+        reject_reason = pix_response.get(
+            "rejectReason", "Motivo não retornado pelo Santander"
+        )
+        raise SantanderRejectedTransactionException(
+            f"Pagamento rejeitado pelo banco na etapa {step} - {reject_reason}"
+        )
