@@ -185,7 +185,13 @@ class SantanderPixStatusResponse(TypedDict):
     transaction: SantanderTransaction
     tags: list[str]
     paymentValue: str
-    status: Literal["READY_TO_PAY", "PENDING_VALIDATION", "PAYED", "PENDING_CONFIRMATION", "REJECTED"]
+    status: Literal[
+        "READY_TO_PAY",
+        "PENDING_VALIDATION",
+        "PAYED",
+        "PENDING_CONFIRMATION",
+        "REJECTED",
+    ]
     dictCode: str | None
     dictCodeType: Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"] | None
     beneficiary: SantanderBeneficiary | None

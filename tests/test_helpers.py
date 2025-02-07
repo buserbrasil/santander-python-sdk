@@ -58,23 +58,8 @@ class UnitTestHelpers(unittest.TestCase):
 
         self.assertEqual(result, "Success")
         self.assertEqual(mock_func.call_count, 2)
-        mock_logger_error.assert_called_once_with("Falha na requisição: Deu ruim - 400 {'message': 'Bad Request'}")
-
-    @patch("santander_client.api_client.helpers.logger.error")
-    def test_retry_one_time_on_request_exception(self, mock_logger_error):
-        mock_func = MagicMock()
-        mock_func.side_effect = [
-            SantanderRequestException("SantanderRequestException", 400, {"message": "Bad Request"}),
-            "Success",
-        ]
-
-        decorated_func = retry_one_time_on_request_exception(mock_func)
-        result = decorated_func()
-
-        self.assertEqual(result, "Success")
-        self.assertEqual(mock_func.call_count, 2)
         mock_logger_error.assert_called_once_with(
-            "Falha na requisição: Santander - SantanderRequestException - 400 {'message': 'Bad Request'}"
+            "Falha na requisição: Santander - Deu ruim - 400 {'message': 'Bad Request'}"
         )
 
 
@@ -85,7 +70,9 @@ class UnitTestExceptions(unittest.TestCase):
             "Erro interno nos dados: Santander - chave pix inválida",
         )
         self.assertEqual(
-            str(SantanderRejectedTransactionException("Criação da transação rejeitada")),
+            str(
+                SantanderRejectedTransactionException("Criação da transação rejeitada")
+            ),
             "Rejeição de pagamento: Santander - Criação da transação rejeitada",
         )
         self.assertEqual(
@@ -93,8 +80,12 @@ class UnitTestExceptions(unittest.TestCase):
             "Timeout na atualização do status após várias tentativas: Santander - Timeout",
         )
         self.assertEqual(
-            str(SantanderRequestException("Falha na requisição", 400, {"message": "Bad Request"})),
-            "Falha na requisição: Santander - Falha na requisição - 400 {'message': 'Bad Request'}",
+            str(
+                SantanderRequestException(
+                    "Falha na requisição", 400, {"message": "Bad Request"}
+                )
+            ),
+            "Falha na requisição: Santander - Falha na requisição - 400 {'message': 'Bad Request'}"
         )
         self.assertEqual(
             str(SantanderClientException("Erro no cliente")),
@@ -109,4 +100,6 @@ class UnitTestExceptions(unittest.TestCase):
             "Erro no workspace: Santander - id não encontrado",
         )
 
-        assert isinstance(SantanderValueErrorException("chave pix inválida"), SantanderException)
+        assert isinstance(
+            SantanderValueErrorException("chave pix inválida"), SantanderException
+        )

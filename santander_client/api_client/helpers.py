@@ -7,7 +7,11 @@ from typing import Literal
 import re
 import requests
 
-from santander_client.api_client.exceptions import SantanderRequestException, SantanderValueErrorException
+from santander_client.api_client.exceptions import (
+    SantanderRequestException,
+    SantanderValueErrorException,
+)
+
 logger = logging.getLogger("santanderLogger")
 
 LENGTH_CNPJ = 14
@@ -81,11 +85,15 @@ def get_status_code_description(status_code: int | str) -> str:
 
 
 def today():
-    now = timezone.now().replace(tzinfo=tz.UTC).astimezone(tz.gettz("America/Sao_Paulo"))
+    now = (
+        timezone.now().replace(tzinfo=tz.UTC).astimezone(tz.gettz("America/Sao_Paulo"))
+    )
     return now.date()
-  
+
+
 def only_numbers(s):
     return re.sub("[^0-9]", "", s) if s else s
+
 
 def is_valid_cpf(cpf):
     clean_cpf = only_numbers(cpf)
@@ -98,9 +106,7 @@ def is_valid_cpf(cpf):
     digit = {0: 0, 1: 0}
     a = 10
     for c in range(2):
-        digit[c] = sum(
-            i * int(clean_cpf[idx]) for idx, i in enumerate(range(a, 1, -1))
-        )
+        digit[c] = sum(i * int(clean_cpf[idx]) for idx, i in enumerate(range(a, 1, -1)))
 
         digit[c] = int(11 - (digit[c] % 11))
         if digit[c] > 9:
@@ -129,6 +135,7 @@ def is_valid_cnpj(cnpj):
 
     return True
 
+
 def retry_one_time_on_request_exception(func):
     def wrapper(*args, **kwargs):
         try:
@@ -138,6 +145,7 @@ def retry_one_time_on_request_exception(func):
             return func(*args, **kwargs)
 
     return wrapper
+
 
 def convert_to_decimal(cents: int) -> Decimal:
     return Decimal(cents) / 100
