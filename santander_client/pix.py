@@ -12,13 +12,13 @@ from santander_client.api_client.exceptions import (
     SantanderTimeoutToChangeStatusException,
 )
 
-from .api_client.helpers import (
+from santander_client.api_client.helpers import (
     document_type,
     get_pix_key_type,
     retry_one_time_on_request_exception,
     truncate_value,
 )
-from .santander_types import (
+from santander_client.types import (
     BeneficiaryDataDict,
     ConfirmOrderStatus,
     CreateOrderStatus,

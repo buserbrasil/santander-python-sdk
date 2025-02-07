@@ -6,7 +6,7 @@ from requests_mock import Mocker
 from santander_client.api_client.client import TOKEN_ENDPOINT
 from santander_client.api_client.workspaces import WORKSPACES_ENDPOINT
 from santander_client.pix import PIX_ENDPOINT
-from santander_client.santander_types import BeneficiaryDataDict
+from santander_client.types import BeneficiaryDataDict
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"

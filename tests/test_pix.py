@@ -21,7 +21,7 @@ from mock.santander_mocker import (
     beneficiary_dict_john_cc,
     get_dict_payment_pix_response,
 )
-from santander_client.santander_types import CreateOrderStatus
+from santander_client.types import CreateOrderStatus
 
 
 class UnitTestPix(unittest.TestCase):
