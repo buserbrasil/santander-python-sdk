@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
-from santander_client.api_client.helpers import (
+from santander_sdk.api_client.helpers import (
     get_status_code_description,
     retry_one_time_on_request_exception,
     truncate_value,
     get_pix_key_type,
 )
-from santander_client.api_client.exceptions import (
+from santander_sdk.api_client.exceptions import (
     SantanderClientException,
     SantanderConfigurationException,
     SantanderException,
@@ -45,7 +45,7 @@ class UnitTestHelpers(unittest.TestCase):
         self.assertEqual(get_status_code_description(200), "200 - Sucesso")
         self.assertEqual(get_status_code_description(392), "392 - Erro desconhecido")
 
-    @patch("santander_client.api_client.helpers.logger.error")
+    @patch("santander_sdk.api_client.helpers.logger.error")
     def test_retry_one_time_on_request_exception(self, mock_logger_error):
         mock_func = MagicMock()
         mock_func.side_effect = [

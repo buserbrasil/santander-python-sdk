@@ -3,11 +3,11 @@ import unittest
 from decimal import Decimal as D
 from unittest.mock import MagicMock, patch
 
-from santander_client.api_client.exceptions import (
+from santander_sdk.api_client.exceptions import (
     SantanderRejectedTransactionException,
     SantanderTimeoutToChangeStatusException,
 )
-from santander_client.pix import (
+from santander_sdk.pix import (
     PIX_ENDPOINT,
     TYPE_ACCOUNT_MAP,
     _check_for_rejected_exception,
@@ -22,7 +22,7 @@ from mock.santander_mocker import (
     beneficiary_dict_john_cc,
     get_dict_payment_pix_response,
 )
-from santander_client.types import OrderStatus, SantanderTransferResponse
+from santander_sdk.types import OrderStatus, SantanderTransferResponse
 
 
 class UnitTestPix(unittest.TestCase):
@@ -277,7 +277,7 @@ class UnitTestPix(unittest.TestCase):
         with self.assertRaises(SantanderRejectedTransactionException):
             _check_for_rejected_exception(pix_response, "Criação do pagamento PIX")
 
-    @patch("santander_client.pix.sleep", return_value=None)
+    @patch("santander_sdk.pix.sleep", return_value=None)
     def test_transfer_pix_payment_success(self, mock_sleep):
         pix_id = "2A1F6556Q6AS"
         tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
@@ -352,7 +352,7 @@ class UnitTestPix(unittest.TestCase):
             data=expected_post_data,
         )
 
-    @patch("santander_client.pix.sleep", return_value=None)
+    @patch("santander_sdk.pix.sleep", return_value=None)
     def test_transfer_pix_payment_invalid_value(self, mock_sleep):
         pix_key = "12345678909"
         description = "Pagamento Teste valor inválido"
@@ -405,8 +405,8 @@ class UnitTestPix(unittest.TestCase):
             response["error"],
         )
 
-    @patch("santander_client.pix._request_pix_payment_status")
-    @patch("santander_client.pix.sleep", return_value=None)
+    @patch("santander_sdk.pix._request_pix_payment_status")
+    @patch("santander_sdk.pix.sleep", return_value=None)
     def test_pix_payment_status_polling_timeout(
         self, mock_sleep, mock_request_pix_payment_status
     ):
@@ -426,8 +426,8 @@ class UnitTestPix(unittest.TestCase):
         self.assertEqual(mock_request_pix_payment_status.call_count, 3)
         self.assertEqual(mock_sleep.call_count, 1)
 
-    @patch("santander_client.pix._request_pix_payment_status")
-    @patch("santander_client.pix.sleep", return_value=None)
+    @patch("santander_sdk.pix._request_pix_payment_status")
+    @patch("santander_sdk.pix.sleep", return_value=None)
     def test_pix_payment_status_polling_status_reached(
         self, mock_sleep, mock_request_pix_payment_status
     ):
@@ -451,8 +451,8 @@ class UnitTestPix(unittest.TestCase):
         self.assertEqual(mock_request_pix_payment_status.call_count, 3)
         self.assertEqual(mock_sleep.call_count, 1)
 
-    @patch("santander_client.pix._request_pix_payment_status")
-    @patch("santander_client.pix.sleep", return_value=None)
+    @patch("santander_sdk.pix._request_pix_payment_status")
+    @patch("santander_sdk.pix.sleep", return_value=None)
     def test_pix_payment_status_polling_multiple_status_reached(
         self, mock_sleep, mock_request_pix_payment_status
     ):

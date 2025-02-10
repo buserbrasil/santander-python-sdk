@@ -1,8 +1,8 @@
 import pytest
 import requests_mock
 from decimal import Decimal
-from santander_client.api_client.client import SantanderApiClient
-from santander_client.pix import (
+from santander_sdk.api_client.client import SantanderApiClient
+from santander_sdk.pix import (
     MAX_UPDATE_STATUS_ATTEMPTS,
     MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM,
     transfer_pix_payment,
@@ -17,12 +17,12 @@ from mock.santander_mocker import (
     mock_pix_status_endpoint,
     mock_token_endpoint,
 )
-from santander_client.types import OrderStatus
+from santander_sdk.types import OrderStatus
 
 
 @pytest.fixture
 def mock_api(mocker):
-    mocker.patch("santander_client.pix.sleep", return_value=None)
+    mocker.patch("santander_sdk.pix.sleep", return_value=None)
     with requests_mock.Mocker() as m:
         mock_get_workspaces_endpoint(m)
         mock_token_endpoint(m)

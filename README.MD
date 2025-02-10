@@ -15,7 +15,7 @@ pip install santander-python-sdk
 
 ```python
 from decimal import Decimal
-from santander_client import SantanderApiClient, SantanderClientConfiguration
+from santander_sdk import SantanderApiClient, SantanderClientConfiguration
 
 client = SantanderApiClient(SantanderClientConfiguration(
   client_id="client_id",

@@ -3,7 +3,7 @@ import logging
 from urllib.parse import urljoin
 import requests
 
-from santander_client.api_client.workspaces import get_first_workspace_id_of_type
+from santander_sdk.api_client.workspaces import get_first_workspace_id_of_type
 
 from .helpers import get_status_code_description, try_parse_response_to_json
 

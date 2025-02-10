@@ -1,7 +1,7 @@
 import pytest
 
-from santander_client.api_client.client import SantanderApiClient
-from santander_client.api_client.client_configuration import (
+from santander_sdk.api_client.client import SantanderApiClient
+from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
 
