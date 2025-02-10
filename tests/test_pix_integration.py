@@ -191,7 +191,7 @@ def test_transfer_pix_payment_rejected_on_create(mock_api):
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
-        "data": None
+        "data": None,
     }
     assert mock_create.call_count == 1
 
@@ -216,7 +216,7 @@ def test_transfer_pix_payment_rejected_on_confirm(mock_api):
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
-        "data": None
+        "data": None,
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -229,7 +229,11 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
     description = "Pagamento Teste"
     john_bank_account = beneficiary_dict_john_cc["bank_account"]
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, beneficiary_dict_john_cc
+        mock_api,
+        pix_id,
+        value,
+        OrderStatus.PENDING_VALIDATION,
+        beneficiary_dict_john_cc,
     )
     mock_status = mock_pix_status_endpoint(
         mock_api, pix_id, value, OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc

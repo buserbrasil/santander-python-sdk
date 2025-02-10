@@ -106,7 +106,7 @@ def get_dict_payment_pix_request(
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
-    
+
     bank_account = key["bank_account"]
     bank_code = bank_account.get("bank_code_compe", "")
     bank_ispb = bank_account.get("bank_code_ispb", "")

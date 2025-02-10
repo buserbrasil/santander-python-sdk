@@ -86,7 +86,6 @@ class UnitTestSantanderApiClient(unittest.TestCase):
         self.client._ensure_requirements()
         mock_authenticate.assert_not_called()
 
-
     @patch("santander_client.api_client.client.requests.Session.post")
     def test_request_token(self, mock_post):
         mock_post.return_value.json.return_value = self.token_response_mock

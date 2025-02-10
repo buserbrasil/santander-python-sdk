@@ -119,7 +119,10 @@ class ConfirmOrderStatus:
 class OrderStatus(ConfirmOrderStatus, CreateOrderStatus):
     pass
 
-OrderStatusType = Literal["READY_TO_PAY", "PENDING_VALIDATION", "PAYED", "PENDING_CONFIRMATION", "REJECTED"]
+
+OrderStatusType = Literal[
+    "READY_TO_PAY", "PENDING_VALIDATION", "PAYED", "PENDING_CONFIRMATION", "REJECTED"
+]
 
 
 class SantanderTransferResponse(TypedDict):
@@ -177,7 +180,9 @@ class BeneficiaryDataDict(TypedDict):
     bank_account: BankAccountDict
     recebedor: ReceiverDataDict
 
+
 SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse
+
 
 class TransferPixResult(TypedDict):
     success: bool

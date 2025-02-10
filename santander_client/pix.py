@@ -72,11 +72,15 @@ def transfer_pix_payment(
         payment_status = create_pix_response.get("status")
 
         if not pix_id:
-            raise SantanderClientException("ID do pagamento não foi retornada na criação")
-        
+            raise SantanderClientException(
+                "ID do pagamento não foi retornada na criação"
+            )
+
         if payment_status is None:
-            raise SantanderClientException("Status do pagamento não retornado na criação")
- 
+            raise SantanderClientException(
+                "Status do pagamento não retornado na criação"
+            )
+
         confirm_response = _confirm_pix_payment(pix_id, value, payment_status)
 
         return {"success": True, "data": confirm_response, "error": ""}
@@ -95,8 +99,8 @@ def _pix_payment_status_polling(
     response = _request_pix_payment_status(pix_id, context)
     if response.get("status") in until_status:
         return response
-    
-    for attempt in range(max_attempts -1):
+
+    for attempt in range(max_attempts - 1):
         response = _request_pix_payment_status(pix_id, context)
         payment_status = response.get("status")
         logger.info(
@@ -206,7 +210,7 @@ def _request_create_pix_payment(
                 beneficiary["ispb"] = bank_ispb
             else:
                 raise SantanderValueErrorException("A chave de entrada é inválida")
-            
+
             data.update({"beneficiary": beneficiary})
         except KeyError as e:
             raise SantanderValueErrorException(

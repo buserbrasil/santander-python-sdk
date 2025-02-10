@@ -261,7 +261,9 @@ class UnitTestPix(unittest.TestCase):
         }
 
     def test_check_for_rejected_exception(self):
-        transfer_dict = get_dict_payment_pix_response("123", D("100.00"), OrderStatus.REJECTED)
+        transfer_dict = get_dict_payment_pix_response(
+            "123", D("100.00"), OrderStatus.REJECTED
+        )
         pix_response = cast(SantanderTransferResponse, transfer_dict)
         with self.assertRaises(SantanderRejectedTransactionException):
             _check_for_rejected_exception(pix_response, "Criação do pagamento PIX")
@@ -278,8 +280,12 @@ class UnitTestPix(unittest.TestCase):
             pix_id, D("100.00"), OrderStatus.PENDING_CONFIRMATION
         )
         mock_get_client.return_value.get.side_effect = [
-            get_dict_payment_pix_response(pix_id, D("100.00"), OrderStatus.READY_TO_PAY),
-            get_dict_payment_pix_response(pix_id, D("100.00"), OrderStatus.PENDING_CONFIRMATION),
+            get_dict_payment_pix_response(
+                pix_id, D("100.00"), OrderStatus.READY_TO_PAY
+            ),
+            get_dict_payment_pix_response(
+                pix_id, D("100.00"), OrderStatus.PENDING_CONFIRMATION
+            ),
             get_dict_payment_pix_response(pix_id, D("100.00"), OrderStatus.PAYED),
         ]
         expected_post_data = {
@@ -406,7 +412,9 @@ class UnitTestPix(unittest.TestCase):
         mock_request_pix_payment_status.side_effect = [
             get_dict_payment_pix_response(pix_id, D("55423.21"), "PENDING"),
             get_dict_payment_pix_response(pix_id, D("55423.21"), "PENDING"),
-            get_dict_payment_pix_response(pix_id, D("55423.21"), OrderStatus.READY_TO_PAY),
+            get_dict_payment_pix_response(
+                pix_id, D("55423.21"), OrderStatus.READY_TO_PAY
+            ),
         ]
         response = _pix_payment_status_polling(
             pix_id=pix_id,
@@ -428,7 +436,9 @@ class UnitTestPix(unittest.TestCase):
         mock_request_pix_payment_status.side_effect = [
             get_dict_payment_pix_response(pix_id, D("637.33"), "PENDING"),
             get_dict_payment_pix_response(pix_id, D("637.33"), "PENDING"),
-            get_dict_payment_pix_response(pix_id, D("637.33"), OrderStatus.READY_TO_PAY),
+            get_dict_payment_pix_response(
+                pix_id, D("637.33"), OrderStatus.READY_TO_PAY
+            ),
             get_dict_payment_pix_response(pix_id, D("637.33"), OrderStatus.PAYED),
         ]
 
