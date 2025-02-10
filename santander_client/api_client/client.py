@@ -36,7 +36,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
 
     def __init__(self, config: SantanderClientConfiguration):
         if not isinstance(config, SantanderClientConfiguration):
-            raise SantanderClientConfiguration("Objeto de autenticação inválido")
+            raise SantanderClientException("Objeto de autenticação inválido")
 
         self.base_url = config.base_url.rstrip("/")
         self.config = config
@@ -44,7 +44,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
         self.token = None
         self.token_expires_at = datetime.now()
 
-    def get(self, endpoint: str, params: dict = None) -> dict:
+    def get(self, endpoint: str, params: dict | None = None) -> dict:
         return self._request("GET", endpoint, params=params)
 
     def post(self, endpoint: str, data: dict) -> dict:
@@ -79,12 +79,14 @@ class SantanderApiClient(SantanderAbstractApiClient):
         self.token_expires_at = datetime.now() + timedelta(
             seconds=token_data.get("expires_in", 120)
         )
-        self.session.headers = {
-            "Authorization": f"Bearer {self.token}",
-            "X-Application-Key": self.config.client_id,
-        }
+        self.session.headers.update(
+            {
+                "Authorization": f"Bearer {self.token}",
+                "X-Application-Key": self.config.client_id,
+            }
+        )
         self.session.verify = True
-        self.session.cert = self.config.cert
+        self.session.cert = self.config.cert  # pyright: ignore
 
     def _request_token(self) -> dict:
         url = urljoin(self.base_url, TOKEN_ENDPOINT)
@@ -105,7 +107,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            status_code = getattr(e.response, "status_code", None)
+            status_code = getattr(e.response, "status_code", 0)
             response = try_parse_response_to_json(e.response)
             raise SantanderRequestException(
                 f"Erro na obtenção do Token: {e}", status_code, response
@@ -123,7 +125,11 @@ class SantanderApiClient(SantanderAbstractApiClient):
         return url
 
     def _request(
-        self, method: str, endpoint: str, data: dict = None, params: dict = None
+        self,
+        method: str,
+        endpoint: str,
+        data: dict | None = None,
+        params: dict | None = None,
     ) -> dict:
         self._ensure_requirements()
         url = self._prepare_url(endpoint)
@@ -135,7 +141,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            status_code = getattr(e.response, "status_code", None)
+            status_code = getattr(e.response, "status_code", 0)
             error_content = try_parse_response_to_json(e.response)
             status_description = get_status_code_description(status_code)
 
@@ -143,4 +149,4 @@ class SantanderApiClient(SantanderAbstractApiClient):
                 status_description, status_code, error_content
             )
         except Exception as e:
-            raise SantanderRequestException(f"Erro na requisição: {e}", None, None)
+            raise SantanderRequestException(f"Erro na requisição: {e}", 0, None) from e

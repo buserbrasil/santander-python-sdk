@@ -2,11 +2,12 @@ from decimal import Decimal
 from urllib.parse import urljoin
 
 from requests_mock import Mocker
+from requests_mock.adapter import _Matcher as Matcher
 
 from santander_client.api_client.client import TOKEN_ENDPOINT
 from santander_client.api_client.workspaces import WORKSPACES_ENDPOINT
 from santander_client.pix import PIX_ENDPOINT
-from santander_client.types import BeneficiaryDataDict
+from santander_client.types import BeneficiaryDataDict, OrderStatus
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"
@@ -33,22 +34,22 @@ def get_dict_payment_pix_response(
         "status": status,
         "tags": [],
         "remittanceInformation": "informação da transferência",
-        "nominalValue": value,
+        "nominalValue": str(value),
         "deductedValue": "0.00",
         "addedValue": "0.00",
-        "totalValue": value,
+        "totalValue": str(value),
         "payer": {
             "name": "John Doe SA",
             "documentType": "CPNJ",
             "documentNumber": "20157935000193",
         },
         "transaction": {
-            "value": value,
+            "value": str(value),
             "code": "13a654q",
             "date": "2025-01-08T13:44:36Z",
             "endToEnd": "a213e5q564as456f4as56f",
         },
-        "paymentValue": value,
+        "paymentValue": str(value),
     }
 
     if isinstance(key, str):
@@ -65,17 +66,25 @@ def get_dict_payment_pix_response(
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
-    if key["bank_account"].get("bank_code_compe"):
-        beneficiary["bankCode"] = key["bank_account"]["bank_code_compe"]
+    bank_account = key["bank_account"]
+    bank_code = bank_account.get("bank_code_compe", "")
+    bank_ispb = bank_account.get("bank_code_ispb", "")
+    if bank_code:
+        beneficiary["bankCode"] = bank_code
+    elif bank_ispb:
+        beneficiary["ispb"] = bank_ispb
     else:
-        beneficiary["ispb"] = key["bank_account"]["bank_code_ispb"]
+        raise ValueError("A chave de entrada é inválida")
     payment.update({"beneficiary": beneficiary})
 
     return payment
 
 
 def get_dict_payment_pix_request(
-    id: str, value: str, key: str | BeneficiaryDataDict, key_type: str = ""
+    id: str,
+    value: Decimal,
+    key: str | BeneficiaryDataDict,
+    key_type: str = "",
 ) -> dict:
     payment = {
         "paymentValue": value,
@@ -97,10 +106,16 @@ def get_dict_payment_pix_request(
         "documentNumber": key["bank_account"]["document_number"],
         "name": key["recebedor"]["name"],
     }
-    if key.get("bank_code"):
-        beneficiary["bankCode"] = key["bank_account"]["bank_code_compe"]
+
+    bank_account = key["bank_account"]
+    bank_code = bank_account.get("bank_code_compe", "")
+    bank_ispb = bank_account.get("bank_code_ispb", "")
+    if bank_code:
+        beneficiary["bankCode"] = bank_code
+    elif bank_ispb:
+        beneficiary["ispb"] = bank_ispb
     else:
-        beneficiary["ispb"] = key["bank_account"]["bank_code_ispb"]
+        raise ValueError("A chave de entrada é inválida")
     payment.update({"beneficiary": beneficiary})
 
     return payment
@@ -160,7 +175,7 @@ def mock_create_pix_endpoint(
     status: str,
     pix_info: str | BeneficiaryDataDict,
     key_type: str = "CPF",
-) -> Mocker:
+) -> Matcher:
     post_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
@@ -174,7 +189,7 @@ def mock_confirm_pix_endpoint(
     status: str,
     pix_info: str | BeneficiaryDataDict,
     key_type: str = "CPF",
-) -> Mocker:
+) -> Matcher:
     patch_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
@@ -188,20 +203,20 @@ def mock_pix_status_endpoint(
     status: str,
     pix_info: str | BeneficiaryDataDict,
     key_type: str = "CPF",
-) -> Mocker:
+) -> Matcher:
     get_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
     return mocker.get(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=get_response)
 
 
-def mock_get_workspaces_endpoint(mocker: Mocker) -> Mocker:
+def mock_get_workspaces_endpoint(mocker: Mocker) -> Matcher:
     return mocker.get(
         urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT), json=workspace_response_mock
     )
 
 
-def mock_token_endpoint(mocker: Mocker) -> Mocker:
+def mock_token_endpoint(mocker: Mocker) -> Matcher:
     token_response = get_dict_token_response()
     return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=token_response)
 
@@ -218,14 +233,21 @@ beneficiary_dict_john_cc = BeneficiaryDataDict(
     },
     recebedor={
         "name": "John Doe",
+        "agencia": "123",
+        "conta": "123456789",
+        "conta_dv": "9",
+        "tipo_conta": "checking",
+        "document_number": "12345678909",
+        "bank_code_compe": "123",
+        "bank_code_ispb": "789123",
     },
 )
 
 payment_response_by_beneficiary = get_dict_payment_pix_response(
-    "12345678", 299.99, "READY_TO_PAY", beneficiary_dict_john_cc
+    "12345678", Decimal("299.99"), OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc
 )
 payment_response_by_beneficiary = get_dict_payment_pix_request(
-    "12345678", 299.99, beneficiary_dict_john_cc
+    "12345678", Decimal("299.99"), beneficiary_dict_john_cc
 )
 
 

@@ -1,3 +1,4 @@
+from typing import cast
 import unittest
 from decimal import Decimal as D
 from unittest.mock import patch
@@ -21,7 +22,7 @@ from mock.santander_mocker import (
     beneficiary_dict_john_cc,
     get_dict_payment_pix_response,
 )
-from santander_client.types import CreateOrderStatus
+from santander_client.types import OrderStatus, SantanderTransferResponse
 
 
 class UnitTestPix(unittest.TestCase):
@@ -30,7 +31,7 @@ class UnitTestPix(unittest.TestCase):
         pix_id = "A5Q41DS5Q5AS4"
         tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
         mock_get_client.return_value.post.return_value = get_dict_payment_pix_response(
-            pix_id, D("123"), "PENDING_VALIDATION"
+            pix_id, D("123"), OrderStatus.PENDING_VALIDATION
         )
         mock_client_post = mock_get_client.return_value.post
         test_cases = [
@@ -44,9 +45,36 @@ class UnitTestPix(unittest.TestCase):
                 response = _request_create_pix_payment(
                     key_value, D("123"), "Pagamento Teste", tags=tags
                 )
-                self.assertEqual(response["id"], pix_id)
-                self.assertEqual(response["status"], "PENDING_VALIDATION")
-                self.assertEqual(response["paymentValue"], 123.00)
+                assert response == {
+                    "addedValue": "0.00",
+                    "debitAccount": {
+                        "branch": "0001",
+                        "number": "123456789",
+                    },
+                    "deductedValue": "0.00",
+                    "dictCode": "12345678909",
+                    "dictCodeType": "CPF",
+                    "id": "A5Q41DS5Q5AS4",
+                    "nominalValue": "123",
+                    "obs": "payment mockado",
+                    "payer": {
+                        "documentNumber": "20157935000193",
+                        "documentType": "CPNJ",
+                        "name": "John Doe SA",
+                    },
+                    "paymentValue": "123",
+                    "remittanceInformation": "informação da transferência",
+                    "status": OrderStatus.PENDING_VALIDATION,
+                    "tags": [],
+                    "totalValue": "123",
+                    "transaction": {
+                        "code": "13a654q",
+                        "date": "2025-01-08T13:44:36Z",
+                        "endToEnd": "a213e5q564as456f4as56f",
+                        "value": "123",
+                    },
+                    "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+                }
 
                 expected_body_request = {
                     "tags": tags,
@@ -67,16 +95,50 @@ class UnitTestPix(unittest.TestCase):
         description = "Pagamento Teste"
         tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
         mock_get_client.return_value.post.return_value = get_dict_payment_pix_response(
-            pix_id, value, "PENDING_VALIDATION", beneficiary_dict_john_cc
+            pix_id, value, OrderStatus.PENDING_VALIDATION, beneficiary_dict_john_cc
         )
         mock_client_post = mock_get_client.return_value.post
 
         response = _request_create_pix_payment(
             beneficiary_dict_john_cc, value, description, tags=tags
         )
-        self.assertEqual(response["id"], pix_id)
-        self.assertEqual(response["status"], "PENDING_VALIDATION")
-        self.assertEqual(response["paymentValue"], value)
+        assert response == {
+            "addedValue": "0.00",
+            "beneficiary": {
+                "bankCode": "123",
+                "branch": "123",
+                "documentNumber": "12345678909",
+                "documentType": "CPF",
+                "name": "John Doe",
+                "number": "1234567899",
+                "type": "checking",
+            },
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "id": "QAF65E6Q-A2SQ6A-Q5AS-6Q5",
+            "nominalValue": "1248.33",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "1248.33",
+            "remittanceInformation": "informação da transferência",
+            "status": OrderStatus.PENDING_VALIDATION,
+            "tags": [],
+            "totalValue": "1248.33",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "1248.33",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        }
 
         john_bank_account = beneficiary_dict_john_cc["bank_account"]
         expected_body_request = {
@@ -100,36 +162,62 @@ class UnitTestPix(unittest.TestCase):
         pix_id = "12345"
         value = D("1248.33")
         mock_get_client.return_value.patch.return_value = get_dict_payment_pix_response(
-            pix_id, value, "PAYED"
+            pix_id, value, OrderStatus.PAYED
         )
         mock_client_patch = mock_get_client.return_value.patch
 
         confirm_result = _request_confirm_pix_payment(pix_id, value)
-        self.assertEqual(confirm_result["status"], "PAYED")
-        self.assertEqual(confirm_result["id"], pix_id)
-        self.assertEqual(confirm_result["paymentValue"], value)
-        self.assertEqual(confirm_result["dictCode"], "12345678909")
-        self.assertEqual(confirm_result["dictCodeType"], "CPF")
-
-        expected_body_request = {
-            "paymentValue": str(value),
-            "status": "AUTHORIZED",
+        assert confirm_result == {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": "12345",
+            "nominalValue": "1248.33",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "1248.33",
+            "remittanceInformation": "informação da transferência",
+            "status": OrderStatus.PAYED,
+            "tags": [],
+            "totalValue": "1248.33",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "1248.33",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         }
+
         mock_client_patch.assert_called_with(
-            f"{PIX_ENDPOINT}/{pix_id}", data=expected_body_request
+            f"{PIX_ENDPOINT}/{pix_id}",
+            data={
+                "paymentValue": str(value),
+                "status": "AUTHORIZED",
+            },
         )
 
     @patch("santander_client.pix.get_client")
     def test_request_pix_payment_status(self, mock_get_client):
         pix_id = "A5Q5A6S54F-56AS45F6F6"
         mock_get_client.return_value.get.return_value = get_dict_payment_pix_response(
-            pix_id, D("12156.66"), "PENDING_VALIDATION"
+            pix_id, D("12156.66"), OrderStatus.PENDING_VALIDATION
         )
         status_result = _request_pix_payment_status(
             pix_payment_id=pix_id, step_description="CREATE"
         )
 
-        self.assertEqual(status_result["status"], "PENDING_VALIDATION")
+        status = status_result.get("status", "")
+        self.assertEqual(status, OrderStatus.PENDING_VALIDATION)
         mock_get_client.return_value.get.assert_called_with(f"{PIX_ENDPOINT}/{pix_id}")
 
     @patch("santander_client.pix.get_client")
@@ -137,19 +225,46 @@ class UnitTestPix(unittest.TestCase):
         pix_id = "12345"
         value = D("100.00")
         mock_get_client.return_value.patch.return_value = get_dict_payment_pix_response(
-            pix_id, value, "PAYED"
+            pix_id, value, OrderStatus.PAYED
         )
 
-        payment_status = CreateOrderStatus.READY_TO_PAY
-
-        confirm_result = _confirm_pix_payment(pix_id, value, payment_status)
-        self.assertEqual(confirm_result["status"], "PAYED")
-        self.assertEqual(confirm_result["paymentValue"], 100.00)
-        self.assertEqual(confirm_result["dictCode"], "12345678909")
-        self.assertEqual(confirm_result["dictCodeType"], "CPF")
+        confirm_result = _confirm_pix_payment(pix_id, value, OrderStatus.READY_TO_PAY)
+        assert confirm_result == {
+            "addedValue": "0.00",
+            "debitAccount": {
+                "branch": "0001",
+                "number": "123456789",
+            },
+            "deductedValue": "0.00",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+            "id": "12345",
+            "nominalValue": "100.00",
+            "obs": "payment mockado",
+            "payer": {
+                "documentNumber": "20157935000193",
+                "documentType": "CPNJ",
+                "name": "John Doe SA",
+            },
+            "paymentValue": "100.00",
+            "remittanceInformation": "informação da transferência",
+            "status": OrderStatus.PAYED,
+            "tags": [],
+            "totalValue": "100.00",
+            "transaction": {
+                "code": "13a654q",
+                "date": "2025-01-08T13:44:36Z",
+                "endToEnd": "a213e5q564as456f4as56f",
+                "value": "100.00",
+            },
+            "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+        }
 
     def test_check_for_rejected_exception(self):
-        pix_response = {"status": "REJECTED"}
+        transfer_dict = get_dict_payment_pix_response(
+            "123", D("100.00"), OrderStatus.REJECTED
+        )
+        pix_response = cast(SantanderTransferResponse, transfer_dict)
         with self.assertRaises(SantanderRejectedTransactionException):
             _check_for_rejected_exception(pix_response, "Criação do pagamento PIX")
 
@@ -159,15 +274,19 @@ class UnitTestPix(unittest.TestCase):
         pix_id = "2A1F6556Q6AS"
         tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
         mock_get_client.return_value.post.return_value = get_dict_payment_pix_response(
-            pix_id, D("100.00"), "PENDING_VALIDATION"
+            pix_id, D("100.00"), OrderStatus.PENDING_VALIDATION
         )
         mock_get_client.return_value.patch.return_value = get_dict_payment_pix_response(
-            pix_id, D("100.00"), "PENDING_CONFIRMATION"
+            pix_id, D("100.00"), OrderStatus.PENDING_CONFIRMATION
         )
         mock_get_client.return_value.get.side_effect = [
-            get_dict_payment_pix_response(pix_id, D("100.00"), "READY_TO_PAY"),
-            get_dict_payment_pix_response(pix_id, D("100.00"), "PENDING_CONFIRMATION"),
-            get_dict_payment_pix_response(pix_id, D("100.00"), "PAYED"),
+            get_dict_payment_pix_response(
+                pix_id, D("100.00"), OrderStatus.READY_TO_PAY
+            ),
+            get_dict_payment_pix_response(
+                pix_id, D("100.00"), OrderStatus.PENDING_CONFIRMATION
+            ),
+            get_dict_payment_pix_response(pix_id, D("100.00"), OrderStatus.PAYED),
         ]
         expected_post_data = {
             "dictCode": "12345678909",
@@ -182,12 +301,40 @@ class UnitTestPix(unittest.TestCase):
         transfer_result = transfer_pix_payment(
             pix_key, value, "Pagamento Teste", tags=tags
         )
-        self.assertTrue(transfer_result["success"])
-        self.assertEqual(transfer_result["data"]["status"], "PAYED")
-        self.assertEqual(transfer_result["data"]["paymentValue"], value)
-        self.assertEqual(transfer_result["data"]["dictCode"], "12345678909")
-        self.assertEqual(transfer_result["data"]["dictCodeType"], "CPF")
-        self.assertEqual(transfer_result["data"]["id"], pix_id)
+        assert transfer_result == {
+            "data": {
+                "addedValue": "0.00",
+                "debitAccount": {
+                    "branch": "0001",
+                    "number": "123456789",
+                },
+                "deductedValue": "0.00",
+                "dictCode": "12345678909",
+                "dictCodeType": "CPF",
+                "id": "2A1F6556Q6AS",
+                "nominalValue": "100.00",
+                "obs": "payment mockado",
+                "payer": {
+                    "documentNumber": "20157935000193",
+                    "documentType": "CPNJ",
+                    "name": "John Doe SA",
+                },
+                "paymentValue": "100.00",
+                "remittanceInformation": "informação da transferência",
+                "status": OrderStatus.PAYED,
+                "tags": [],
+                "totalValue": "100.00",
+                "transaction": {
+                    "code": "13a654q",
+                    "date": "2025-01-08T13:44:36Z",
+                    "endToEnd": "a213e5q564as456f4as56f",
+                    "value": "100.00",
+                },
+                "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
+            },
+            "success": True,
+            "error": "",
+        }
         mock_get_client.return_value.post.assert_called_with(
             "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments",
             data=expected_post_data,
@@ -205,18 +352,18 @@ class UnitTestPix(unittest.TestCase):
         transfer_result = transfer_pix_payment(pix_key, D("0.00"), description)
         self.assertFalse(transfer_result["success"])
         self.assertIn("Valor inválido para transferência PIX", transfer_result["error"])
-        transfer_result = transfer_pix_payment(pix_key, "", description)
+        transfer_result = transfer_pix_payment(pix_key, D("21.23"), description)
         self.assertFalse(transfer_result["success"])
 
     @patch("santander_client.pix.get_client")
     def test_transfer_pix_payment_no_pix_id(self, mock_get_client):
         mock_get_client.return_value.post.return_value = get_dict_payment_pix_response(
-            "", D("100.00"), "PENDING_VALIDATION"
+            "", D("100.00"), OrderStatus.PENDING_VALIDATION
         )
         response = transfer_pix_payment("12345678909", D("100.00"), "Pagamento Teste")
         self.assertFalse(response["success"])
         self.assertIn(
-            "ID do pagamento PIX não foi retornada pela criação do pagamento",
+            "ID do pagamento não foi retornada na criação",
             response["error"],
         )
 
@@ -226,7 +373,7 @@ class UnitTestPix(unittest.TestCase):
         value = D("100.00")
 
         mock_get_client.return_value.post.return_value = get_dict_payment_pix_response(
-            pix_key, value, "REJECTED"
+            pix_key, value, OrderStatus.REJECTED
         )
 
         response = transfer_pix_payment(pix_key, value, "Pagamento Teste")
@@ -243,18 +390,18 @@ class UnitTestPix(unittest.TestCase):
     ):
         pix_id = "ABCDE"
         mock_request_pix_payment_status.return_value = get_dict_payment_pix_response(
-            pix_id, D("1234"), "PENDING_VALIDATION"
+            pix_id, D("1234"), OrderStatus.PENDING_VALIDATION
         )
 
         with self.assertRaises(SantanderTimeoutToChangeStatusException):
             _pix_payment_status_polling(
                 pix_id=pix_id,
-                until_status=["READY_TO_PAY"],
+                until_status=[OrderStatus.READY_TO_PAY],
                 context="CREATE",
                 max_attempts=3,
             )
         self.assertEqual(mock_request_pix_payment_status.call_count, 3)
-        self.assertEqual(mock_sleep.call_count, 2)
+        self.assertEqual(mock_sleep.call_count, 1)
 
     @patch("santander_client.pix._request_pix_payment_status")
     @patch("santander_client.pix.sleep", return_value=None)
@@ -265,17 +412,20 @@ class UnitTestPix(unittest.TestCase):
         mock_request_pix_payment_status.side_effect = [
             get_dict_payment_pix_response(pix_id, D("55423.21"), "PENDING"),
             get_dict_payment_pix_response(pix_id, D("55423.21"), "PENDING"),
-            get_dict_payment_pix_response(pix_id, D("55423.21"), "READY_TO_PAY"),
+            get_dict_payment_pix_response(
+                pix_id, D("55423.21"), OrderStatus.READY_TO_PAY
+            ),
         ]
         response = _pix_payment_status_polling(
             pix_id=pix_id,
-            until_status=["READY_TO_PAY"],
+            until_status=[OrderStatus.READY_TO_PAY],
             context="CREATE",
             max_attempts=5,
         )
-        self.assertEqual(response["status"], "READY_TO_PAY")
+        status = response.get("status", "")
+        self.assertEqual(status, OrderStatus.READY_TO_PAY)
         self.assertEqual(mock_request_pix_payment_status.call_count, 3)
-        self.assertEqual(mock_sleep.call_count, 2)
+        self.assertEqual(mock_sleep.call_count, 1)
 
     @patch("santander_client.pix._request_pix_payment_status")
     @patch("santander_client.pix.sleep", return_value=None)
@@ -286,16 +436,19 @@ class UnitTestPix(unittest.TestCase):
         mock_request_pix_payment_status.side_effect = [
             get_dict_payment_pix_response(pix_id, D("637.33"), "PENDING"),
             get_dict_payment_pix_response(pix_id, D("637.33"), "PENDING"),
-            get_dict_payment_pix_response(pix_id, D("637.33"), "READY_TO_PAY"),
-            get_dict_payment_pix_response(pix_id, D("637.33"), "PAYED"),
+            get_dict_payment_pix_response(
+                pix_id, D("637.33"), OrderStatus.READY_TO_PAY
+            ),
+            get_dict_payment_pix_response(pix_id, D("637.33"), OrderStatus.PAYED),
         ]
 
         response = _pix_payment_status_polling(
             pix_id=pix_id,
-            until_status=["READY_TO_PAY", "PAYED"],
+            until_status=[OrderStatus.READY_TO_PAY, OrderStatus.PAYED],
             context="CREATE",
             max_attempts=5,
         )
-        self.assertEqual(response["status"], "READY_TO_PAY")
+        status = response.get("status", "")
+        self.assertEqual(status, OrderStatus.READY_TO_PAY)
         self.assertEqual(mock_request_pix_payment_status.call_count, 3)
-        self.assertEqual(mock_sleep.call_count, 2)
+        self.assertEqual(mock_sleep.call_count, 1)

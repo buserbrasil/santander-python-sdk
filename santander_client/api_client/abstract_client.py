@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 class SantanderAbstractApiClient(ABC):
     @abstractmethod
-    def get(self, endpoint: str, params: dict = None) -> dict:
+    def get(self, endpoint: str, params: dict | None = None) -> dict:
         pass
 
     @abstractmethod

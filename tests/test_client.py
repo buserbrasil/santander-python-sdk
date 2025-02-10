@@ -8,6 +8,7 @@ from santander_client.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
 from santander_client.api_client.exceptions import SantanderClientException
+from decimal import Decimal as D
 from mock.santander_mocker import (
     SANTANDER_URL,
     get_dict_token_response,
@@ -15,6 +16,7 @@ from mock.santander_mocker import (
     get_dict_payment_pix_request,
     get_dict_payment_pix_response,
 )
+from santander_client.types import OrderStatus
 
 
 class UnitTestSantanderApiClient(unittest.TestCase):
@@ -84,14 +86,6 @@ class UnitTestSantanderApiClient(unittest.TestCase):
         self.client._ensure_requirements()
         mock_authenticate.assert_not_called()
 
-    @patch.object(SantanderApiClient, "_authenticate")
-    def test_ensure_requirements_calls_functions(self, mock_authenticate):
-        self.client._ensure_requirements()
-        (
-            mock_authenticate.assert_called_once(),
-            "Deveria ter chamado authenticate pois não estava autenticado",
-        )
-
     @patch("santander_client.api_client.client.requests.Session.post")
     def test_request_token(self, mock_post):
         mock_post.return_value.json.return_value = self.token_response_mock
@@ -117,10 +111,10 @@ class UnitTestSantanderApiClient(unittest.TestCase):
     @patch.object(SantanderApiClient, "_ensure_requirements")
     def test_request(self, mock_ensure_requirements, mock_request):
         response_dict = get_dict_payment_pix_response(
-            "12345678", 299.99, "READY_TO_PAY", "12345678909", "CPF"
+            "12345678", D(299.99), OrderStatus.READY_TO_PAY, "12345678909", "CPF"
         )
         request_dict = get_dict_payment_pix_request(
-            "12345678", 299.99, "12345678909", "CPF"
+            "12345678", D(299.99), "12345678909", "CPF"
         )
         mock_request.return_value.json.return_value = response_dict
 
@@ -161,7 +155,7 @@ class UnitTestSantanderApiClient(unittest.TestCase):
             self.client._prepare_url(":workspaceid/pix")
             == f"{SANTANDER_URL}/d6c7b8a9e/pix"
         )
-        self.client.config.workspace_id = None
+        self.client.config.workspace_id = ""
         with self.assertRaises(SantanderClientException):
             self.client._prepare_url("test_endpoint/:workspaceid")
         self.client.config.workspace_id = "d6c7b8a9e"

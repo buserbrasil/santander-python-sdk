@@ -120,7 +120,12 @@ class OrderStatus(ConfirmOrderStatus, CreateOrderStatus):
     pass
 
 
-class SantanderCreatePixResponse(TypedDict):
+OrderStatusType = Literal[
+    "READY_TO_PAY", "PENDING_VALIDATION", "PAYED", "PENDING_CONFIRMATION", "REJECTED"
+]
+
+
+class SantanderTransferResponse(TypedDict):
     """
     Resposta da criação de transações pix do Santander (POST).
     - Os campos mais importantes aqui são o id, status, paymentValue e transaction.
@@ -148,75 +153,38 @@ class SantanderCreatePixResponse(TypedDict):
     transaction: SantanderTransaction
     tags: list[str]
     paymentValue: str
-    status: Literal["READY_TO_PAY", "PENDING_VALIDATION", "REJECTED"]
+    status: OrderStatusType
     dictCode: str | None
     dictCodeType: Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"] | None
     beneficiary: SantanderBeneficiary | None
 
 
-class SantanderPixStatusResponse(TypedDict):
-    """
-    Resposta de transações pix do Santander tanto pelo PATCH quanto pelo GET.
-    - Os campos mais importantes aqui são o id, status, paymentValue e transaction.
+class BankAccountDict(TypedDict):
+    agencia: str
+    conta: str
+    conta_dv: str
+    tipo_conta: Literal["checking", "savings", "salary", "payment"]
+    document_number: str
+    bank_code_compe: str | None
+    bank_code_ispb: str | None
 
-    ### Status
-    'status' de sucesso:
-        - PAYED é o status de pagamento efetuado com sucesso.
-        - PENDING_CONFIRMATION é o status de pendência de confirmação do pagamento, esse status
-        pode acontecer caso alguma câmara de compensação fique fora do ar no exato momento da
-        chamada das APIs, se o banco recebedor está avaliando a transação, se o cliente ficar sem saldo
-        em conta, entre outros casos.
 
-    'status' de erro:
-        - REJECTED é o status de rejeição do pagamento.
-
-    ### Campos de retorno opcionais (meramente informativos, que inclusive são enviados por nós):
-       - Caso seja um pagamento por chave, o campo dictCode e dictCodeType.
-       - O mesmo vale para o beneficiary, caso seja um pagamento por beneficiário.
-    """
-
-    id: str
-    workspaceId: str
-    debitAccount: str
-    remittanceInformation: str
-    nominalValue: str
-    totalValue: str
-    payer: SantanderPayer
-    transaction: SantanderTransaction
-    tags: list[str]
-    paymentValue: str
-    status: Literal[
-        "READY_TO_PAY",
-        "PENDING_VALIDATION",
-        "PAYED",
-        "PENDING_CONFIRMATION",
-        "REJECTED",
-    ]
-    dictCode: str | None
-    dictCodeType: Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"] | None
-    beneficiary: SantanderBeneficiary | None
+class ReceiverDataDict(BankAccountDict):
+    name: str
 
 
 class BeneficiaryDataDict(TypedDict):
     """Dados do beneficiário para transferência PIX"""
-
-    class BankAccountDict(TypedDict):
-        agencia: str
-        conta: str
-        conta_dv: str
-        tipo_conta: Literal["checking", "savings", "salary", "payment"]
-        document_number: str
-        bank_code_compe: str | None
-        bank_code_ispb: str | None
-
-    class ReceiverDataDict(BankAccountDict):
-        name: str
 
     "Dados do recebedor para transferência PIX"
     bank_account: BankAccountDict
     recebedor: ReceiverDataDict
 
 
+SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse
+
+
 class TransferPixResult(TypedDict):
     success: bool
-    data: SantanderPixStatusResponse | None
+    data: SantanderPixResponse | None
+    error: str

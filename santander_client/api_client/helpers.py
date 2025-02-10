@@ -1,7 +1,5 @@
 from decimal import ROUND_DOWN, Decimal
-from datetime import timezone
 import logging
-from dateutil import tz
 from itertools import cycle
 from typing import Literal
 import re
@@ -82,13 +80,6 @@ SANTANDER_STATUS_DESCRIPTIONS = {
 def get_status_code_description(status_code: int | str) -> str:
     """Retorna a descrição do status do Santander"""
     return f"{status_code} - {SANTANDER_STATUS_DESCRIPTIONS.get(int(status_code), 'Erro desconhecido')}"
-
-
-def today():
-    now = (
-        timezone.now().replace(tzinfo=tz.UTC).astimezone(tz.gettz("America/Sao_Paulo"))
-    )
-    return now.date()
 
 
 def only_numbers(s):
