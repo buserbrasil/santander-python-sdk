@@ -1,16 +1,12 @@
 import pytest
 import requests_mock
 from decimal import Decimal
-from santander_client.api_client import set_configuration
-from santander_client.api_client.client_configuration import (
-    SantanderClientConfiguration,
-)
+from santander_client.api_client.client import SantanderApiClient
 from santander_client.pix import (
     MAX_UPDATE_STATUS_ATTEMPTS,
     MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM,
     transfer_pix_payment,
 )
-from mock.santander_mocker import client_santander_client_config_mock
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,
     beneficiary_dict_john_cc,
@@ -27,16 +23,13 @@ from santander_client.types import OrderStatus
 @pytest.fixture
 def mock_api(mocker):
     mocker.patch("santander_client.pix.sleep", return_value=None)
-    set_configuration(
-        SantanderClientConfiguration(**client_santander_client_config_mock)
-    )
     with requests_mock.Mocker() as m:
         mock_get_workspaces_endpoint(m)
         mock_token_endpoint(m)
         yield m
 
 
-def test_transfer_pix_payment_success(mock_api):
+def test_transfer_pix_payment_success(mock_api, api_client):
     pix_id = "12345"
     value = Decimal("100.00")
     description = "Pagamento Teste"
@@ -50,7 +43,9 @@ def test_transfer_pix_payment_success(mock_api):
     mock_status = mock_pix_status_endpoint(
         mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
     )
-    transfer_result = transfer_pix_payment(pix_key, value, description, tags=["teste"])
+    transfer_result = transfer_pix_payment(
+        api_client, pix_key, value, description, tags=["teste"]
+    )
     assert transfer_result == {
         "data": {
             "addedValue": "0.00",
@@ -98,7 +93,7 @@ def test_transfer_pix_payment_success(mock_api):
     }
 
 
-def test_transfer_pix_payment_timeout_create(mock_api):
+def test_transfer_pix_payment_timeout_create(api_client: SantanderApiClient, mock_api):
     pix_id = "12345"
     value = Decimal("100.00")
     description = "Pagamento Teste"
@@ -110,7 +105,7 @@ def test_transfer_pix_payment_timeout_create(mock_api):
     mock_status = mock_pix_status_endpoint(
         mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
     )
-    transfer_result = transfer_pix_payment(pix_key, value, description)
+    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
 
     assert transfer_result == {
         "success": False,
@@ -121,7 +116,9 @@ def test_transfer_pix_payment_timeout_create(mock_api):
     assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS
 
 
-def test_transfer_pix_payment_timeout_before_authorize(mock_api):
+def test_transfer_pix_payment_timeout_before_authorize(
+    api_client: SantanderApiClient, mock_api
+):
     pix_id = "QAS47FASF5646"
     value = Decimal("123.44")
     description = "Pagamento Teste"
@@ -137,7 +134,7 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
         mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(pix_key, value, description)
+    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": True,
         "data": {
@@ -177,7 +174,9 @@ def test_transfer_pix_payment_timeout_before_authorize(mock_api):
     assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM
 
 
-def test_transfer_pix_payment_rejected_on_create(mock_api):
+def test_transfer_pix_payment_rejected_on_create(
+    api_client: SantanderApiClient, mock_api
+):
     pix_id = "QASF4568E48Q"
     value = Decimal("100.00")
     description = "Pagamento Teste"
@@ -187,7 +186,7 @@ def test_transfer_pix_payment_rejected_on_create(mock_api):
         mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(pix_key, value, description)
+    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
@@ -196,7 +195,9 @@ def test_transfer_pix_payment_rejected_on_create(mock_api):
     assert mock_create.call_count == 1
 
 
-def test_transfer_pix_payment_rejected_on_confirm(mock_api):
+def test_transfer_pix_payment_rejected_on_confirm(
+    api_client: SantanderApiClient, mock_api
+):
     pix_id = "5A4SD6Q5W6Q68A"
     value = Decimal("157.00")
     description = "Pagamento Teste"
@@ -212,7 +213,7 @@ def test_transfer_pix_payment_rejected_on_confirm(mock_api):
         mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(pix_key, value, description)
+    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
@@ -223,7 +224,9 @@ def test_transfer_pix_payment_rejected_on_confirm(mock_api):
     assert mock_status.call_count == 0
 
 
-def test_transfer_pix_payment_with_beneficiary(mock_api):
+def test_transfer_pix_payment_with_beneficiary(
+    api_client: SantanderApiClient, mock_api
+):
     pix_id = "ASF5Q7Q879WQ"
     value = Decimal("59.99")
     description = "Pagamento Teste"
@@ -242,7 +245,9 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
         mock_api, pix_id, value, OrderStatus.PAYED, beneficiary_dict_john_cc
     )
 
-    transfer_result = transfer_pix_payment(beneficiary_dict_john_cc, value, description)
+    transfer_result = transfer_pix_payment(
+        api_client, beneficiary_dict_john_cc, value, description
+    )
     assert transfer_result == {
         "success": True,
         "data": {
@@ -289,7 +294,9 @@ def test_transfer_pix_payment_with_beneficiary(mock_api):
     assert mock_confirm.call_count == 1
 
 
-def test_transfer_pix_payment_lazy_status_update(mock_api):
+def test_transfer_pix_payment_lazy_status_update(
+    api_client: SantanderApiClient, mock_api
+):
     pix_id = "12345"
     value = Decimal("130000.00")
     description = "Pagamento Teste"
@@ -327,7 +334,7 @@ def test_transfer_pix_payment_lazy_status_update(mock_api):
         ],
     )
 
-    transfer_result = transfer_pix_payment(pix_key, value, description)
+    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": True,
         "data": {

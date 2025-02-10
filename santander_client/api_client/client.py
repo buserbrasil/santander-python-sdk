@@ -1,15 +1,24 @@
 from datetime import datetime, timedelta
+import logging
 from urllib.parse import urljoin
 import requests
+
+from santander_client.api_client.workspaces import get_first_workspace_id_of_type
 
 from .helpers import get_status_code_description, try_parse_response_to_json
 
 from .abstract_client import SantanderAbstractApiClient
 from .client_configuration import SantanderClientConfiguration
-from .exceptions import SantanderRequestException, SantanderClientException
+from .exceptions import (
+    SantanderRequestException,
+    SantanderClientException,
+    SantanderWorkspaceException,
+)
 
 BEFORE_EXPIRE_TOKEN_SECONDS = timedelta(seconds=60)
 TOKEN_ENDPOINT = "/auth/oauth/v2/token"
+
+logger = logging.getLogger(__name__)
 
 
 class SantanderApiClient(SantanderAbstractApiClient):
@@ -35,14 +44,24 @@ class SantanderApiClient(SantanderAbstractApiClient):
     """
 
     def __init__(self, config: SantanderClientConfiguration):
-        if not isinstance(config, SantanderClientConfiguration):
-            raise SantanderClientException("Objeto de autenticação inválido")
-
         self.base_url = config.base_url.rstrip("/")
         self.config = config
         self.session = requests.Session()
         self.token = None
         self.token_expires_at = datetime.now()
+
+        self._set_default_workspace_id()
+
+    def _set_default_workspace_id(self):
+        if not self.config.workspace_id:
+            workspace_id = get_first_workspace_id_of_type(self, "PAYMENTS")
+            if not workspace_id:
+                raise SantanderWorkspaceException(
+                    "Conta sem configuração de workspace na configuração e na conta."
+                )
+
+            logger.info(f"Workspace obtido e configurado com sucesso: {workspace_id}")
+            self.config.set_workspace_id(workspace_id)
 
     def get(self, endpoint: str, params: dict | None = None) -> dict:
         return self._request("GET", endpoint, params=params)
