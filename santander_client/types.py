@@ -1,4 +1,4 @@
-from typing import Literal, TypedDict, Any
+from typing import Literal, TypedDict
 
 
 class SantanderAPIErrorsFields(TypedDict):
