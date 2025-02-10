@@ -7,13 +7,13 @@ from .exceptions import SantanderClientException
     Para ter acesso ao sistema cliente e consumir as APIs, se faz necessário ter o cadastro de
     uma ou mais Workspaces, sendo a Workspace a “porta de entrada” para ter o acesso ao Hub de
     Pagamentos transacional. Rotas de pagamentos, geração de pix, etc, vão precisar do id do workspace.
-    
+
     Existem os seguintes tipos de workspaces
     - PAYMENTS para o cliente que deseja fazer pagamentos próprios;
     - DIGITAL_CORBAN para o cliente que deseja fazer pagamentos de terceiros de maneira digital;
     - PHYSICAL_CORBAN para o cliente que deseja fazer pagamentos e ser correspondente bancário
     de maneira subestabelecida ou direta.
-    
+
     ### No nosso caso, o uso será para o tipo PAYMENTS.
 """
 WorkspaceType = Literal["PHYSICAL_CORBAN", "PAYMENTS", "DIGITAL_CORBAN"]
