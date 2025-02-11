@@ -13,7 +13,6 @@ from santander_sdk.api_client.exceptions import (
 )
 
 from santander_sdk.api_client.helpers import (
-    document_type,
     get_pix_key_type,
     retry_one_time_on_request_exception,
     truncate_value,
