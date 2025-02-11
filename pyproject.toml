@@ -4,6 +4,8 @@ dynamic = ["version"]
 description = "Client não oficial da API do Santander em Python"
 authors = [
     { name = "Samuel Rodrigues Coelho", email = "samuel.coelho@buser.com.br" },
+    { name = "Erle Carrara", email = "erle.carrara@buser.com.br" },
+    { name = "Walison Filipe", email = "walison.filipe@buser.com.br" },
 ]
 readme = "README.md"
 keywords = ["santander", "api", "client", "python"]

@@ -16,12 +16,14 @@ pip install santander-python-sdk
 ```python
 from decimal import Decimal
 from santander_sdk import SantanderApiClient, SantanderClientConfiguration
+from santander_sdk.pix import transfer_pix_payment, get_transfer
 
 client = SantanderApiClient(SantanderClientConfiguration(
   client_id="client_id",
   client_secret="client_pk",
   cert="certificate_path",
-  base_url="api_url"
+  base_url="api_url",
+  workspace_id="optional"
 ))
 
 # Realizar um PIX para uma chave
@@ -32,12 +34,14 @@ transfer = transfer_pix_payment(
     description="My first pix payment"
 )
 
-pix_info = get_transfer(transfer["id"])
-# ...
-```
+# Obter informações de um pix realizado (SantanderTransferResponse | SantanderAPIErrorResponse)
+transfer = get_transfer(transfer["id"])
+
+status = transfer["status"] 
 
 ## Em desenvolvimento
  - Será atualizado o README
+```
 
 ## Funcionalidades
 

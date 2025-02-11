@@ -94,6 +94,14 @@ def transfer_pix_payment(
         return {"success": False, "error": error_message, "data": None}
 
 
+def get_transfer(client: SantanderApiClient, pix_payment_id: str) -> SantanderPixResponse:
+    if not pix_payment_id:
+        raise SantanderValueErrorException("pix_payment_id não informado")
+
+    response = client.get(f"{PIX_ENDPOINT}/{pix_payment_id}")
+    return cast(SantanderPixResponse, response)
+
+    
 def _pix_payment_status_polling(
     client: SantanderApiClient,
     pix_id: str,
