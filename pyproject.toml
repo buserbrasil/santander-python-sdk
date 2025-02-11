@@ -1,6 +1,6 @@
 [project]
 name = "santander-python-sdk"
-dynamic = ["version"]
+version = "0.1.0"
 description = "Client não oficial da API do Santander em Python"
 authors = [
     { name = "Samuel Rodrigues Coelho", email = "samuel.coelho@buser.com.br" },
