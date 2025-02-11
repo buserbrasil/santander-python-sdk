@@ -3,11 +3,11 @@ import unittest
 from unittest.mock import patch
 from urllib.parse import urljoin
 
-from santander_client.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
-from santander_client.api_client.client_configuration import (
+from santander_sdk.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
+from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
-from santander_client.api_client.exceptions import SantanderClientException
+from santander_sdk.api_client.exceptions import SantanderClientException
 from decimal import Decimal as D
 from mock.santander_mocker import (
     SANTANDER_URL,
@@ -16,7 +16,7 @@ from mock.santander_mocker import (
     get_dict_payment_pix_request,
     get_dict_payment_pix_response,
 )
-from santander_client.types import OrderStatus
+from santander_sdk.types import OrderStatus
 
 
 class UnitTestSantanderApiClient(unittest.TestCase):
@@ -48,7 +48,7 @@ class UnitTestSantanderApiClient(unittest.TestCase):
             "Não tem token, deveria retornar False"
         )
 
-    @patch("santander_client.api_client.client.datetime")
+    @patch("santander_sdk.api_client.client.datetime")
     @patch.object(
         SantanderApiClient, "_request_token", return_value=get_dict_token_response()
     )
@@ -86,7 +86,7 @@ class UnitTestSantanderApiClient(unittest.TestCase):
         self.client._ensure_requirements()
         mock_authenticate.assert_not_called()
 
-    @patch("santander_client.api_client.client.requests.Session.post")
+    @patch("santander_sdk.api_client.client.requests.Session.post")
     def test_request_token(self, mock_post):
         mock_post.return_value.json.return_value = self.token_response_mock
         self.client.config.cert = "test_request_token_cert_path.pem"
@@ -107,7 +107,7 @@ class UnitTestSantanderApiClient(unittest.TestCase):
             token_data.get("expires_in"), self.token_response_mock.get("expires_in")
         )
 
-    @patch("santander_client.api_client.client.requests.Session.request")
+    @patch("santander_sdk.api_client.client.requests.Session.request")
     @patch.object(SantanderApiClient, "_ensure_requirements")
     def test_request(self, mock_ensure_requirements, mock_request):
         response_dict = get_dict_payment_pix_response(
@@ -160,31 +160,31 @@ class UnitTestSantanderApiClient(unittest.TestCase):
             self.client._prepare_url("test_endpoint/:workspaceid")
         self.client.config.workspace_id = "d6c7b8a9e"
 
-    @patch("santander_client.api_client.client.SantanderApiClient._request")
+    @patch("santander_sdk.api_client.client.SantanderApiClient._request")
     def test_get_method(self, mock_request):
         self.client.get("test_endpoint")
         mock_request.assert_called_once_with("GET", "test_endpoint", params=None)
 
-    @patch("santander_client.api_client.client.SantanderApiClient._request")
+    @patch("santander_sdk.api_client.client.SantanderApiClient._request")
     def test_post_method(self, mock_request):
         self.client.post("test_endpoint", data={"post_data_key": "post_data_value"})
         mock_request.assert_called_once_with(
             "POST", "test_endpoint", data={"post_data_key": "post_data_value"}
         )
 
-    @patch("santander_client.api_client.client.SantanderApiClient._request")
+    @patch("santander_sdk.api_client.client.SantanderApiClient._request")
     def test_put_method(self, mock_request):
         self.client.put("test_endpoint", data={"put_data_key": "put_data_value"})
         mock_request.assert_called_once_with(
             "PUT", "test_endpoint", data={"put_data_key": "put_data_value"}
         )
 
-    @patch("santander_client.api_client.client.SantanderApiClient._request")
+    @patch("santander_sdk.api_client.client.SantanderApiClient._request")
     def test_delete_method(self, mock_request):
         self.client.delete("test_endpoint")
         mock_request.assert_called_once_with("DELETE", "test_endpoint")
 
-    @patch("santander_client.api_client.client.SantanderApiClient._request")
+    @patch("santander_sdk.api_client.client.SantanderApiClient._request")
     def test_patch_method(self, mock_request):
         self.client.patch("test_endpoint", data={"patch_data_key": "patch_data_value"})
         mock_request.assert_called_once_with(

@@ -3,8 +3,8 @@ import logging
 from time import sleep
 from typing import List, Literal, cast
 
-from santander_client.api_client.client import SantanderApiClient
-from santander_client.api_client.exceptions import (
+from santander_sdk.api_client.client import SantanderApiClient
+from santander_sdk.api_client.exceptions import (
     SantanderClientException,
     SantanderRejectedTransactionException,
     SantanderRequestException,
@@ -12,13 +12,13 @@ from santander_client.api_client.exceptions import (
     SantanderTimeoutToChangeStatusException,
 )
 
-from santander_client.api_client.helpers import (
+from santander_sdk.api_client.helpers import (
     document_type,
     get_pix_key_type,
     retry_one_time_on_request_exception,
     truncate_value,
 )
-from santander_client.types import (
+from santander_sdk.types import (
     BeneficiaryDataDict,
     ConfirmOrderStatus,
     CreateOrderStatus,

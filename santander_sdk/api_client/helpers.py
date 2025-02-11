@@ -5,7 +5,7 @@ from typing import Literal
 import re
 import requests
 
-from santander_client.api_client.exceptions import (
+from santander_sdk.api_client.exceptions import (
     SantanderRequestException,
     SantanderValueErrorException,
 )

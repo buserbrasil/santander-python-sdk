@@ -4,10 +4,10 @@ from urllib.parse import urljoin
 from requests_mock import Mocker
 from requests_mock.adapter import _Matcher as Matcher
 
-from santander_client.api_client.client import TOKEN_ENDPOINT
-from santander_client.api_client.workspaces import WORKSPACES_ENDPOINT
-from santander_client.pix import PIX_ENDPOINT
-from santander_client.types import BeneficiaryDataDict, OrderStatus
+from santander_sdk.api_client.client import TOKEN_ENDPOINT
+from santander_sdk.api_client.workspaces import WORKSPACES_ENDPOINT
+from santander_sdk.pix import PIX_ENDPOINT
+from santander_sdk.types import BeneficiaryDataDict, OrderStatus
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"

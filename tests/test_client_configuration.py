@@ -1,5 +1,5 @@
 import unittest
-from santander_client.api_client.client_configuration import (
+from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
 from mock.santander_mocker import client_santander_client_config_mock
