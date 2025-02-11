@@ -60,8 +60,8 @@ class SantanderBeneficiary(TypedDict):
     name: str
     documentType: Literal["CPF", "CNPJ"]
     documentNumber: str
-    bankCode: str
-    ispb: str
+    bankCode: str | None
+    ispb: str | None
     branch: str
     number: str
     type: Literal["CONTA_CORRENTE", "CONTA_POUPANCA", "CONTA_PAGAMENTO"]
@@ -158,27 +158,6 @@ class SantanderTransferResponse(TypedDict):
     dictCodeType: Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"] | None
     beneficiary: SantanderBeneficiary | None
 
-
-class BankAccountDict(TypedDict):
-    agencia: str
-    conta: str
-    conta_dv: str
-    tipo_conta: Literal["checking", "savings", "salary", "payment"]
-    document_number: str
-    bank_code_compe: str | None
-    bank_code_ispb: str | None
-
-
-class ReceiverDataDict(BankAccountDict):
-    name: str
-
-
-class BeneficiaryDataDict(TypedDict):
-    """Dados do beneficiário para transferência PIX"""
-
-    "Dados do recebedor para transferência PIX"
-    bank_account: BankAccountDict
-    recebedor: ReceiverDataDict
 
 
 SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse

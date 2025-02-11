@@ -16,28 +16,51 @@ pip install santander-python-sdk
 ```python
 from decimal import Decimal
 from santander_sdk import SantanderApiClient, SantanderClientConfiguration
+from santander_sdk.pix import transfer_pix_payment, get_transfer
 
+
+# Setup do client
 client = SantanderApiClient(SantanderClientConfiguration(
   client_id="client_id",
   client_secret="client_pk",
   cert="certificate_path",
-  base_url="api_url"
+  base_url="api_url",
+  workspace_id="optional"
 ))
 
-# Realizar um PIX para uma chave
+# Exemplo 1 - PIX para uma chave (Telefone, email, chave aleatória, cpf ou cpnj)
 transfer = transfer_pix_payment(
     client,
-    pix_info="alice@example.com", # PIX key
+    pix_key="alice@example.com",
     value=Decimal(0.99),
     description="My first pix payment"
 )
 
-pix_info = get_transfer(transfer["id"])
-# ...
-```
+# Exemplo 2 - Transferência pix via beneficiário:
+benefiary = SantanderBeneficiary(
+    name="John Doe",
+    bankCode="404",
+    branch="2424",
+    number="123456789", # Número da conta com dígito verificador
+    type="CONTA_CORRENTE",
+    documentType="CPF",
+    documentNumber="12345678909",
+)
 
-## Em desenvolvimento
- - Será atualizado o README
+transfer = transfer_pix_payment(
+    client,
+    benefiary,
+    value=Decimal(0.99),
+    description="My second pix payment by beneficiary"
+)
+
+
+# Exemplo 3 - Consulta de um pix realizado 
+transfer = get_transfer(transfer["id"])
+assert transfer["status"] == "PAYED"
+
+
+```
 
 ## Funcionalidades
 

@@ -9,7 +9,6 @@ from santander_sdk.api_client.exceptions import (
 )
 from santander_sdk.pix import (
     PIX_ENDPOINT,
-    TYPE_ACCOUNT_MAP,
     _check_for_rejected_exception,
     _confirm_pix_payment,
     _pix_payment_status_polling,
@@ -19,8 +18,9 @@ from santander_sdk.pix import (
     transfer_pix_payment,
 )
 from mock.santander_mocker import (
-    beneficiary_dict_john_cc,
+    santander_beneciary_john,
     get_dict_payment_pix_response,
+    beneciary_john_dict_json,
 )
 from santander_sdk.types import OrderStatus, SantanderTransferResponse
 
@@ -101,27 +101,19 @@ class UnitTestPix(unittest.TestCase):
         description = "Pagamento Teste"
         tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
         self.api_client.post.return_value = get_dict_payment_pix_response(
-            pix_id, value, OrderStatus.PENDING_VALIDATION, beneficiary_dict_john_cc
+            pix_id, value, OrderStatus.PENDING_VALIDATION, santander_beneciary_john
         )
 
         response = _request_create_pix_payment(
             self.api_client,
-            beneficiary_dict_john_cc,
+            santander_beneciary_john,
             value,
             description,
             tags=tags,
         )
         assert response == {
             "addedValue": "0.00",
-            "beneficiary": {
-                "bankCode": "123",
-                "branch": "123",
-                "documentNumber": "12345678909",
-                "documentType": "CPF",
-                "name": "John Doe",
-                "number": "1234567899",
-                "type": "checking",
-            },
+            "beneficiary": beneciary_john_dict_json,
             "debitAccount": {
                 "branch": "0001",
                 "number": "123456789",
@@ -149,20 +141,11 @@ class UnitTestPix(unittest.TestCase):
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         }
 
-        john_bank_account = beneficiary_dict_john_cc["bank_account"]
         expected_body_request = {
             "tags": tags,
             "paymentValue": str(value),
             "remittanceInformation": description,
-            "beneficiary": {
-                "branch": beneficiary_dict_john_cc["bank_account"]["agencia"],
-                "number": f"{john_bank_account['conta']}{john_bank_account['conta_dv']}",
-                "type": TYPE_ACCOUNT_MAP["checking"],
-                "documentType": "CPF",
-                "documentNumber": john_bank_account["document_number"],
-                "name": beneficiary_dict_john_cc["recebedor"]["name"],
-                "bankCode": john_bank_account["bank_code_compe"],
-            },
+            "beneficiary": beneciary_john_dict_json,
         }
         self.api_client.post.assert_called_with(
             PIX_ENDPOINT, data=expected_body_request
