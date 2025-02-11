@@ -9,7 +9,8 @@ from santander_sdk.pix import (
 )
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,
-    beneficiary_dict_john_cc,
+    santander_beneciary_john,
+    beneciary_john_dict_json,
     get_dict_payment_pix_response,
     mock_confirm_pix_endpoint,
     mock_create_pix_endpoint,
@@ -230,37 +231,29 @@ def test_transfer_pix_payment_with_beneficiary(
     pix_id = "ASF5Q7Q879WQ"
     value = Decimal("59.99")
     description = "Pagamento Teste"
-    john_bank_account = beneficiary_dict_john_cc["bank_account"]
+
     mock_create = mock_create_pix_endpoint(
         mock_api,
         pix_id,
         value,
         OrderStatus.PENDING_VALIDATION,
-        beneficiary_dict_john_cc,
+        santander_beneciary_john,
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc
+        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, santander_beneciary_john
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PAYED, beneficiary_dict_john_cc
+        mock_api, pix_id, value, OrderStatus.PAYED, santander_beneciary_john
     )
 
     transfer_result = transfer_pix_payment(
-        api_client, beneficiary_dict_john_cc, value, description
+        api_client, santander_beneciary_john, value, description
     )
     assert transfer_result == {
         "success": True,
         "data": {
             "addedValue": "0.00",
-            "beneficiary": {
-                "branch": beneficiary_dict_john_cc["bank_account"]["agencia"],
-                "number": f"{john_bank_account['conta']}{john_bank_account['conta_dv']}",
-                "type": john_bank_account["tipo_conta"],
-                "documentType": "CPF",
-                "documentNumber": john_bank_account["document_number"],
-                "name": beneficiary_dict_john_cc["recebedor"]["name"],
-                "bankCode": john_bank_account["bank_code_compe"],
-            },
+            "beneficiary": beneciary_john_dict_json,
             "debitAccount": {
                 "branch": "0001",
                 "number": "123456789",

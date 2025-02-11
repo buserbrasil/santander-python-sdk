@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import cast
 from urllib.parse import urljoin
 
 from requests_mock import Mocker
@@ -7,7 +8,7 @@ from requests_mock.adapter import _Matcher as Matcher
 from santander_sdk.api_client.client import TOKEN_ENDPOINT
 from santander_sdk.api_client.workspaces import WORKSPACES_ENDPOINT
 from santander_sdk.pix import PIX_ENDPOINT
-from santander_sdk.types import BeneficiaryDataDict, OrderStatus
+from santander_sdk.types import SantanderBeneficiary, OrderStatus
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"
@@ -20,7 +21,7 @@ def get_dict_payment_pix_response(
     id: str,
     value: Decimal,
     status: str,
-    key: str | BeneficiaryDataDict = "12345678909",
+    key: str | SantanderBeneficiary = "12345678909",
     key_type: str = "CPF",
 ) -> dict:
     payment = {
@@ -56,34 +57,26 @@ def get_dict_payment_pix_response(
         payment.update({"dictCode": key, "dictCodeType": key_type})
         return payment
 
-    beneficiary = {
-        "branch": key["bank_account"]["agencia"],
-        "number": f"{key['bank_account']['conta']}{key['bank_account']['conta_dv']}",
-        "type": key["bank_account"]["tipo_conta"],
-        "documentType": "CPNJ"
-        if len(key["bank_account"]["document_number"]) > 11
-        else "CPF",
-        "documentNumber": key["bank_account"]["document_number"],
-        "name": key["recebedor"]["name"],
-    }
-    bank_account = key["bank_account"]
-    bank_code = bank_account.get("bank_code_compe", "")
-    bank_ispb = bank_account.get("bank_code_ispb", "")
-    if bank_code:
-        beneficiary["bankCode"] = bank_code
-    elif bank_ispb:
-        beneficiary["ispb"] = bank_ispb
-    else:
-        raise ValueError("A chave de entrada é inválida")
-    payment.update({"beneficiary": beneficiary})
-
+    payment.update({"beneficiary": beneficiary_as_dict_json(key)})
     return payment
+
+
+def beneficiary_as_dict_json(beneficiary: SantanderBeneficiary) -> dict:
+    beneciary_dict = cast(dict, beneficiary.copy())
+    bank_code = beneciary_dict.get("bankCode", "")
+    ispb = beneciary_dict.get("ispb", "")
+    if bank_code and ispb:
+        del beneciary_dict["ispb"]
+    elif not bank_code and not ispb:
+        raise ValueError("Deve ser informado 'bankCode' ou 'ispb'")
+
+    return beneciary_dict
 
 
 def get_dict_payment_pix_request(
     id: str,
     value: Decimal,
-    key: str | BeneficiaryDataDict,
+    key: str | SantanderBeneficiary,
     key_type: str = "",
 ) -> dict:
     payment = {
@@ -96,28 +89,7 @@ def get_dict_payment_pix_request(
         payment.update({"dictCode": key, "dictCodeType": key_type})
         return payment
 
-    beneficiary = {
-        "branch": key["bank_account"]["agencia"],
-        "number": f"{key['bank_account']['conta']}{key['bank_account']['conta_dv']}",
-        "type": key["bank_account"]["tipo_conta"],
-        "documentType": "CPNJ"
-        if len(key["bank_account"]["document_number"]) > 11
-        else "CPF",
-        "documentNumber": key["bank_account"]["document_number"],
-        "name": key["recebedor"]["name"],
-    }
-
-    bank_account = key["bank_account"]
-    bank_code = bank_account.get("bank_code_compe", "")
-    bank_ispb = bank_account.get("bank_code_ispb", "")
-    if bank_code:
-        beneficiary["bankCode"] = bank_code
-    elif bank_ispb:
-        beneficiary["ispb"] = bank_ispb
-    else:
-        raise ValueError("A chave de entrada é inválida")
-    payment.update({"beneficiary": beneficiary})
-
+    payment.update({"beneficiary": beneficiary_as_dict_json(key)})
     return payment
 
 
@@ -173,7 +145,7 @@ def mock_create_pix_endpoint(
     pix_id: str,
     value: Decimal,
     status: str,
-    pix_info: str | BeneficiaryDataDict,
+    pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
 ) -> Matcher:
     post_response = get_dict_payment_pix_response(
@@ -187,7 +159,7 @@ def mock_confirm_pix_endpoint(
     pix_id: str,
     value: Decimal,
     status: str,
-    pix_info: str | BeneficiaryDataDict,
+    pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
 ) -> Matcher:
     patch_response = get_dict_payment_pix_response(
@@ -201,7 +173,7 @@ def mock_pix_status_endpoint(
     pix_id: str,
     value: Decimal,
     status: str,
-    pix_info: str | BeneficiaryDataDict,
+    pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
 ) -> Matcher:
     get_response = get_dict_payment_pix_response(
@@ -221,33 +193,34 @@ def mock_token_endpoint(mocker: Mocker) -> Matcher:
     return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=token_response)
 
 
-beneficiary_dict_john_cc = BeneficiaryDataDict(
-    bank_account={
-        "agencia": "123",
-        "conta": "123456789",
-        "conta_dv": "9",
-        "tipo_conta": "checking",
-        "document_number": "12345678909",
-        "bank_code_compe": "123",
-        "bank_code_ispb": "789123",
-    },
-    recebedor={
-        "name": "John Doe",
-        "agencia": "123",
-        "conta": "123456789",
-        "conta_dv": "9",
-        "tipo_conta": "checking",
-        "document_number": "12345678909",
-        "bank_code_compe": "123",
-        "bank_code_ispb": "789123",
-    },
+
+beneciary_john_dict_json = {
+    "name": "John Doe",
+    "documentType": "CPF",
+    "documentNumber": "12345678909",
+    "bankCode": "404",
+    "branch": "2424",
+    "number": "123456789",
+    "type": "CONTA_CORRENTE",
+}
+    
+
+santander_beneciary_john = SantanderBeneficiary(
+    bankCode="404",
+    branch="2424",
+    number="123456789",
+    type="CONTA_CORRENTE",
+    documentType="CPF",
+    documentNumber="12345678909",
+    ispb="789123",
+    name="John Doe",
 )
 
 payment_response_by_beneficiary = get_dict_payment_pix_response(
-    "12345678", Decimal("299.99"), OrderStatus.READY_TO_PAY, beneficiary_dict_john_cc
+    "12345678", Decimal("299.99"), OrderStatus.READY_TO_PAY, santander_beneciary_john
 )
 payment_response_by_beneficiary = get_dict_payment_pix_request(
-    "12345678", Decimal("299.99"), beneficiary_dict_john_cc
+    "12345678", Decimal("299.99"), santander_beneciary_john
 )
 
 

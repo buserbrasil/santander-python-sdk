@@ -142,7 +142,7 @@ def convert_to_decimal(cents: int) -> Decimal:
     return Decimal(cents) / 100
 
 
-def document_type(document_number: str) -> str:
+def document_type(document_number: str) -> Literal["CPF", "CNPJ"]:
     if len(document_number) == 11:
         return "CPF"
     if len(document_number) == 14:

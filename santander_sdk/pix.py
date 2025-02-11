@@ -19,7 +19,7 @@ from santander_sdk.api_client.helpers import (
     truncate_value,
 )
 from santander_sdk.types import (
-    BeneficiaryDataDict,
+    SantanderBeneficiary,
     ConfirmOrderStatus,
     CreateOrderStatus,
     OrderStatus,
@@ -35,16 +35,9 @@ MAX_UPDATE_STATUS_ATTEMPTS = 10
 MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM = 120
 PIX_CONFIRM_INTERVAL_TIME = 2
 
-TYPE_ACCOUNT_MAP = {
-    "savings": "CONTA_POUPANCA",
-    "payment": "CONTA_PAGAMENTO",
-    "checking": "CONTA_CORRENTE",
-}
-
-
 def transfer_pix_payment(
     client: SantanderApiClient,
-    pix_info: str | BeneficiaryDataDict,
+    pix_key: str | SantanderBeneficiary,
     value: D,
     description: str,
     tags: list[str] = [],
@@ -52,7 +45,7 @@ def transfer_pix_payment(
     """Realiza uma transferência PIX para uma chave PIX ou para um beneficiário
         -   Se for informado uma chave PIX, o valor deve ser uma string com a chave CPF, CNPJ, EMAIL, CELULAR ou chave aleatória
         -   CELULAR deve ser informado no formato +5511912345678 (14 caracteres incluindo o +)
-        -   Se for informado um beneficiário, o valor deve ser BeneficiaryDataDict com os dados do beneficiário
+        -   Se for informado um beneficiário, o valor deve ser SantanderBeneficiary com os dados do beneficiário
 
     ### Retorno de sucesso:
         -   success: True se a transferência foi realizada com sucesso
@@ -69,7 +62,7 @@ def transfer_pix_payment(
             )
 
         create_pix_response = _request_create_pix_payment(
-            client, pix_info, value, description, tags
+            client, pix_key, value, description, tags
         )
         pix_id = create_pix_response.get("id")
         logger.info("Santander - PIX criado com sucesso: {pix_id}")
@@ -193,48 +186,32 @@ def _confirm_pix_payment(
 
 def _request_create_pix_payment(
     client: SantanderApiClient,
-    pix_info: BeneficiaryDataDict | str,
+    pix_key: SantanderBeneficiary | str,
     value: D,
     description: str,
     tags: list[str] = [],
 ) -> SantanderPixResponse:
-    """Cria uma ordem de pagamento. Caso o status seja REJECTED, a exceção SantanderRejectedTransactionException é lançada.
-    Regra de negócio aqui: pagamento por beneficiário na request deve ser informado o bank_code ou ispb, nunca os dois."""
+    """Cria uma ordem de pagamento. Caso o status seja REJECTED, a exceção SantanderRejectedTransactionException é lançada."""
     data = {
         "tags": tags,
         "paymentValue": truncate_value(value),
         "remittanceInformation": description,
     }
-    if isinstance(pix_info, str):
-        pix_type = get_pix_key_type(pix_info)
-        data.update({"dictCode": pix_info, "dictCodeType": pix_type})
-    elif isinstance(pix_info, dict):
-        try:
-            beneficiary = {
-                "branch": pix_info["bank_account"]["agencia"],
-                "number": f"{pix_info['bank_account']['conta']}{pix_info['bank_account']['conta_dv']}",
-                "type": TYPE_ACCOUNT_MAP[pix_info["bank_account"]["tipo_conta"]],
-                "documentType": document_type(
-                    pix_info["bank_account"]["document_number"]
-                ),
-                "documentNumber": pix_info["bank_account"]["document_number"],
-                "name": pix_info["recebedor"]["name"],
-            }
-            bank_account = pix_info["bank_account"]
-            bank_code = bank_account.get("bank_code_compe", "")
-            bank_ispb = bank_account.get("bank_code_ispb", "")
-            if bank_code:
-                beneficiary["bankCode"] = bank_code
-            elif bank_ispb:
-                beneficiary["ispb"] = bank_ispb
-            else:
-                raise SantanderValueErrorException("A chave de entrada é inválida")
+    if isinstance(pix_key, str):
+        pix_type = get_pix_key_type(pix_key)
+        data.update({"dictCode": pix_key, "dictCodeType": pix_type})
+    elif isinstance(pix_key, dict):
+        beneficiary = cast(dict, pix_key.copy())
+        bank_code = pix_key.get("bankCode", "")
+        ispb = pix_key.get("ispb", "")
 
-            data.update({"beneficiary": beneficiary})
-        except KeyError as e:
-            raise SantanderValueErrorException(
-                f"Campo obrigatório não informado para o beneficiário: {e}"
-            )
+        if bank_code and ispb:
+            "Deve ser informado o bankCode ou ispb, nunca os dois."
+            del beneficiary["ispb"]
+        elif not bank_code and not ispb:
+            raise SantanderValueErrorException("Deve ser informado 'bankCode' ou 'ispb'")
+        
+        data.update({"beneficiary": beneficiary})
     else:
         raise SantanderValueErrorException("Chave PIX ou Beneficiário não informado")
 
