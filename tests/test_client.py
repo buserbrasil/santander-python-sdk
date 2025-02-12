@@ -1,21 +1,21 @@
-from datetime import datetime, timedelta
 import unittest
+from datetime import datetime, timedelta
+from decimal import Decimal as D
 from unittest.mock import patch
-from urllib.parse import urljoin
+
+from mock.santander_mocker import (
+    SANTANDER_URL,
+    get_dict_payment_pix_request,
+    get_dict_payment_pix_response,
+    get_dict_token_request,
+    get_dict_token_response,
+)
 
 from santander_sdk.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
 from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
 from santander_sdk.api_client.exceptions import SantanderClientException
-from decimal import Decimal as D
-from mock.santander_mocker import (
-    SANTANDER_URL,
-    get_dict_token_response,
-    get_dict_token_request,
-    get_dict_payment_pix_request,
-    get_dict_payment_pix_response,
-)
 from santander_sdk.types import OrderStatus
 
 
