@@ -159,7 +159,6 @@ class SantanderTransferResponse(TypedDict):
     beneficiary: SantanderBeneficiary | None
 
 
-
 SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse
 
 

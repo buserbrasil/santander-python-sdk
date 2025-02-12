@@ -193,7 +193,6 @@ def mock_token_endpoint(mocker: Mocker) -> Matcher:
     return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=token_response)
 
 
-
 beneciary_john_dict_json = {
     "name": "John Doe",
     "documentType": "CPF",
@@ -203,7 +202,7 @@ beneciary_john_dict_json = {
     "number": "123456789",
     "type": "CONTA_CORRENTE",
 }
-    
+
 
 santander_beneciary_john = SantanderBeneficiary(
     bankCode="404",

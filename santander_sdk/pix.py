@@ -34,6 +34,7 @@ MAX_UPDATE_STATUS_ATTEMPTS = 10
 MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM = 120
 PIX_CONFIRM_INTERVAL_TIME = 2
 
+
 def transfer_pix(
     client: SantanderApiClient,
     pix_key: str | SantanderBeneficiary,
@@ -86,14 +87,16 @@ def transfer_pix(
         return {"success": False, "error": error_message, "data": None}
 
 
-def get_transfer(client: SantanderApiClient, pix_payment_id: str) -> SantanderPixResponse:
+def get_transfer(
+    client: SantanderApiClient, pix_payment_id: str
+) -> SantanderPixResponse:
     if not pix_payment_id:
         raise SantanderValueErrorException("pix_payment_id não informado")
 
     response = client.get(f"{PIX_ENDPOINT}/{pix_payment_id}")
     return cast(SantanderPixResponse, response)
 
-    
+
 def _pix_payment_status_polling(
     client: SantanderApiClient,
     pix_id: str,
@@ -208,8 +211,10 @@ def _request_create_pix_payment(
             "Deve ser informado o bankCode ou ispb, nunca os dois."
             del beneficiary["ispb"]
         elif not bank_code and not ispb:
-            raise SantanderValueErrorException("Deve ser informado 'bankCode' ou 'ispb'")
-        
+            raise SantanderValueErrorException(
+                "Deve ser informado 'bankCode' ou 'ispb'"
+            )
+
         data.update({"beneficiary": beneficiary})
     else:
         raise SantanderValueErrorException("Chave PIX ou Beneficiário não informado")

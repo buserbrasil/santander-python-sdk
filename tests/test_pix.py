@@ -344,13 +344,9 @@ class UnitTestPix(unittest.TestCase):
             self.api_client, pix_key, D("-21.55"), description
         )
         self.assertFalse(transfer_result["success"])
-        transfer_result = transfer_pix(
-            self.api_client, pix_key, D("0"), description
-        )
+        transfer_result = transfer_pix(self.api_client, pix_key, D("0"), description)
         self.assertFalse(transfer_result["success"])
-        transfer_result = transfer_pix(
-            self.api_client, pix_key, D("0.00"), description
-        )
+        transfer_result = transfer_pix(self.api_client, pix_key, D("0.00"), description)
         self.assertFalse(transfer_result["success"])
         self.assertIn("Valor inválido para transferência PIX", transfer_result["error"])
         transfer_result = transfer_pix(
@@ -379,9 +375,7 @@ class UnitTestPix(unittest.TestCase):
             pix_key, value, OrderStatus.REJECTED
         )
 
-        response = transfer_pix(
-            self.api_client, pix_key, value, "Pagamento Teste"
-        )
+        response = transfer_pix(self.api_client, pix_key, value, "Pagamento Teste")
         self.assertFalse(response["success"])
         self.assertIn(
             "Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX",
