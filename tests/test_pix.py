@@ -15,7 +15,7 @@ from santander_sdk.pix import (
     _request_confirm_pix_payment,
     _request_create_pix_payment,
     _request_pix_payment_status,
-    transfer_pix_payment,
+    transfer_pix,
 )
 from mock.santander_mocker import (
     santander_beneciary_john,
@@ -289,7 +289,7 @@ class UnitTestPix(unittest.TestCase):
         pix_key = "12345678909"
         value = D("100.00")
 
-        transfer_result = transfer_pix_payment(
+        transfer_result = transfer_pix(
             self.api_client,
             pix_key,
             value,
@@ -340,20 +340,20 @@ class UnitTestPix(unittest.TestCase):
         pix_key = "12345678909"
         description = "Pagamento Teste valor inválido"
 
-        transfer_result = transfer_pix_payment(
+        transfer_result = transfer_pix(
             self.api_client, pix_key, D("-21.55"), description
         )
         self.assertFalse(transfer_result["success"])
-        transfer_result = transfer_pix_payment(
+        transfer_result = transfer_pix(
             self.api_client, pix_key, D("0"), description
         )
         self.assertFalse(transfer_result["success"])
-        transfer_result = transfer_pix_payment(
+        transfer_result = transfer_pix(
             self.api_client, pix_key, D("0.00"), description
         )
         self.assertFalse(transfer_result["success"])
         self.assertIn("Valor inválido para transferência PIX", transfer_result["error"])
-        transfer_result = transfer_pix_payment(
+        transfer_result = transfer_pix(
             self.api_client, pix_key, D("21.23"), description
         )
         self.assertFalse(transfer_result["success"])
@@ -362,7 +362,7 @@ class UnitTestPix(unittest.TestCase):
         self.api_client.post.return_value = get_dict_payment_pix_response(
             "", D("100.00"), OrderStatus.PENDING_VALIDATION
         )
-        response = transfer_pix_payment(
+        response = transfer_pix(
             self.api_client, "12345678909", D("100.00"), "Pagamento Teste"
         )
         self.assertFalse(response["success"])
@@ -379,7 +379,7 @@ class UnitTestPix(unittest.TestCase):
             pix_key, value, OrderStatus.REJECTED
         )
 
-        response = transfer_pix_payment(
+        response = transfer_pix(
             self.api_client, pix_key, value, "Pagamento Teste"
         )
         self.assertFalse(response["success"])

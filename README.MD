@@ -15,9 +15,12 @@ pip install santander-python-sdk
 
 ```python
 from decimal import Decimal
-from santander_sdk import SantanderApiClient, SantanderClientConfiguration
-from santander_sdk.pix import transfer_pix_payment, get_transfer
-
+from santander_sdk import (
+  SantanderApiClient,
+  SantanderClientConfiguration
+  SantanderBeneficiary,
+)
+from santander_sdk.pix import transfer_pix, get_transfer
 
 # Setup do client
 client = SantanderApiClient(SantanderClientConfiguration(
@@ -29,7 +32,7 @@ client = SantanderApiClient(SantanderClientConfiguration(
 ))
 
 # Exemplo 1 - PIX para uma chave (Telefone, email, chave aleatória, cpf ou cpnj)
-transfer = transfer_pix_payment(
+transfer = transfer_pix(
     client,
     pix_key="alice@example.com",
     value=Decimal(0.99),
@@ -47,7 +50,7 @@ benefiary = SantanderBeneficiary(
     documentNumber="12345678909",
 )
 
-transfer = transfer_pix_payment(
+transfer = transfer_pix(
     client,
     benefiary,
     value=Decimal(0.99),
