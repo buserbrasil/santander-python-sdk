@@ -1,21 +1,21 @@
-from datetime import datetime, timedelta
 import unittest
+from datetime import datetime, timedelta
+from decimal import Decimal as D
 from unittest.mock import patch
-from urllib.parse import urljoin
+
+from mock.santander_mocker import (
+    SANTANDER_URL,
+    get_dict_payment_pix_request,
+    get_dict_payment_pix_response,
+    get_dict_token_request,
+    get_dict_token_response,
+)
 
 from santander_sdk.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
 from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
 from santander_sdk.api_client.exceptions import SantanderClientException
-from decimal import Decimal as D
-from mock.santander_mocker import (
-    SANTANDER_URL,
-    get_dict_token_response,
-    get_dict_token_request,
-    get_dict_payment_pix_request,
-    get_dict_payment_pix_response,
-)
 from santander_sdk.types import OrderStatus
 
 
@@ -93,7 +93,7 @@ class UnitTestSantanderApiClient(unittest.TestCase):
 
         token_data = self.client._request_token()
         mock_post.assert_called_once_with(
-            urljoin(SANTANDER_URL, TOKEN_ENDPOINT),
+            TOKEN_ENDPOINT,
             data=self.token_request_mock,
             verify=True,
             timeout=60,
@@ -119,23 +119,25 @@ class UnitTestSantanderApiClient(unittest.TestCase):
         mock_request.return_value.json.return_value = response_dict
 
         # GET (Não precisa de data)
-        response_data = self.client._request("GET", "test_endpoint")
+        response_data = self.client._request("GET", "/test_endpoint")
         assert response_data == response_dict, (
             "Deveria ter retornado o dict de resposta"
         )
         mock_request.assert_called_once_with(
-            "GET", f"{SANTANDER_URL}/test_endpoint", json=None, params=None, timeout=60
+            "GET", "/test_endpoint", json=None, params=None, timeout=60
         )
 
         # Post (Precisa de data)
         mock_request.reset_mock()
-        response_data = self.client._request("POST", "test_endpoint", data=request_dict)
+        response_data = self.client._request(
+            "POST", "/test_endpoint", data=request_dict
+        )
         assert response_data == response_dict, (
             "Deveria ter retornado o dict de resposta"
         )
         mock_request.assert_called_once_with(
             "POST",
-            f"{SANTANDER_URL}/test_endpoint",
+            "/test_endpoint",
             json=request_dict,
             params=None,
             timeout=60,
@@ -143,18 +145,9 @@ class UnitTestSantanderApiClient(unittest.TestCase):
 
     def test_prepare_url(self):
         self.client.config.workspace_id = "d6c7b8a9e"
-        assert (
-            self.client._prepare_url("test_endpoint/qr")
-            == f"{SANTANDER_URL}/test_endpoint/qr"
-        )
-        assert (
-            self.client._prepare_url("test/:WORKSPACEID")
-            == f"{SANTANDER_URL}/test/d6c7b8a9e"
-        )
-        assert (
-            self.client._prepare_url(":workspaceid/pix")
-            == f"{SANTANDER_URL}/d6c7b8a9e/pix"
-        )
+        assert self.client._prepare_url("test_endpoint/qr") == "test_endpoint/qr"
+        assert self.client._prepare_url("test/:WORKSPACEID") == "test/d6c7b8a9e"
+        assert self.client._prepare_url(":workspaceid/pix") == "d6c7b8a9e/pix"
         self.client.config.workspace_id = ""
         with self.assertRaises(SantanderClientException):
             self.client._prepare_url("test_endpoint/:workspaceid")
