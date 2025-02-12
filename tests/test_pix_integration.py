@@ -5,7 +5,7 @@ from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.pix import (
     MAX_UPDATE_STATUS_ATTEMPTS,
     MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM,
-    transfer_pix_payment,
+    transfer_pix,
 )
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,
@@ -44,7 +44,7 @@ def test_transfer_pix_payment_success(mock_api, api_client):
     mock_status = mock_pix_status_endpoint(
         mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
     )
-    transfer_result = transfer_pix_payment(
+    transfer_result = transfer_pix(
         api_client, pix_key, value, description, tags=["teste"]
     )
     assert transfer_result == {
@@ -106,7 +106,7 @@ def test_transfer_pix_payment_timeout_create(api_client: SantanderApiClient, moc
     mock_status = mock_pix_status_endpoint(
         mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
     )
-    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
+    transfer_result = transfer_pix(api_client, pix_key, value, description)
 
     assert transfer_result == {
         "success": False,
@@ -135,7 +135,7 @@ def test_transfer_pix_payment_timeout_before_authorize(
         mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
+    transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": True,
         "data": {
@@ -187,7 +187,7 @@ def test_transfer_pix_payment_rejected_on_create(
         mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
+    transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
@@ -214,7 +214,7 @@ def test_transfer_pix_payment_rejected_on_confirm(
         mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
 
-    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
+    transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
         "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
@@ -246,7 +246,7 @@ def test_transfer_pix_payment_with_beneficiary(
         mock_api, pix_id, value, OrderStatus.PAYED, santander_beneciary_john
     )
 
-    transfer_result = transfer_pix_payment(
+    transfer_result = transfer_pix(
         api_client, santander_beneciary_john, value, description
     )
     assert transfer_result == {
@@ -327,7 +327,7 @@ def test_transfer_pix_payment_lazy_status_update(
         ],
     )
 
-    transfer_result = transfer_pix_payment(api_client, pix_key, value, description)
+    transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": True,
         "data": {

@@ -34,7 +34,7 @@ MAX_UPDATE_STATUS_ATTEMPTS = 10
 MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM = 120
 PIX_CONFIRM_INTERVAL_TIME = 2
 
-def transfer_pix_payment(
+def transfer_pix(
     client: SantanderApiClient,
     pix_key: str | SantanderBeneficiary,
     value: D,
