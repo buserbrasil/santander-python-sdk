@@ -129,7 +129,9 @@ class UnitTestSantanderApiClient(unittest.TestCase):
 
         # Post (Precisa de data)
         mock_request.reset_mock()
-        response_data = self.client._request("POST", "/test_endpoint", data=request_dict)
+        response_data = self.client._request(
+            "POST", "/test_endpoint", data=request_dict
+        )
         assert response_data == response_dict, (
             "Deveria ter retornado o dict de resposta"
         )
@@ -143,18 +145,9 @@ class UnitTestSantanderApiClient(unittest.TestCase):
 
     def test_prepare_url(self):
         self.client.config.workspace_id = "d6c7b8a9e"
-        assert (
-            self.client._prepare_url("test_endpoint/qr")
-            == "test_endpoint/qr"
-        )
-        assert (
-            self.client._prepare_url("test/:WORKSPACEID")
-            == "test/d6c7b8a9e"
-        )
-        assert (
-            self.client._prepare_url(":workspaceid/pix")
-            == "d6c7b8a9e/pix"
-        )
+        assert self.client._prepare_url("test_endpoint/qr") == "test_endpoint/qr"
+        assert self.client._prepare_url("test/:WORKSPACEID") == "test/d6c7b8a9e"
+        assert self.client._prepare_url(":workspaceid/pix") == "d6c7b8a9e/pix"
         self.client.config.workspace_id = ""
         with self.assertRaises(SantanderClientException):
             self.client._prepare_url("test_endpoint/:workspaceid")
