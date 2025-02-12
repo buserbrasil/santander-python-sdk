@@ -1,19 +1,19 @@
-from datetime import datetime, timedelta
 import logging
-from urllib.parse import urljoin
+from datetime import datetime, timedelta
+
 import requests
 
+from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.workspaces import get_first_workspace_id_of_type
-
-from .helpers import get_status_code_description, try_parse_response_to_json
 
 from .abstract_client import SantanderAbstractApiClient
 from .client_configuration import SantanderClientConfiguration
 from .exceptions import (
-    SantanderRequestException,
     SantanderClientException,
+    SantanderRequestException,
     SantanderWorkspaceException,
 )
+from .helpers import get_status_code_description, try_parse_response_to_json
 
 BEFORE_EXPIRE_TOKEN_SECONDS = timedelta(seconds=60)
 TOKEN_ENDPOINT = "/auth/oauth/v2/token"
@@ -44,9 +44,8 @@ class SantanderApiClient(SantanderAbstractApiClient):
     """
 
     def __init__(self, config: SantanderClientConfiguration):
-        self.base_url = config.base_url.rstrip("/")
         self.config = config
-        self.session = requests.Session()
+        self.session = BaseURLSession(base_url=config.base_url)
         self.token = None
         self.token_expires_at = datetime.now()
 
@@ -108,7 +107,6 @@ class SantanderApiClient(SantanderAbstractApiClient):
         self.session.cert = self.config.cert  # pyright: ignore
 
     def _request_token(self) -> dict:
-        url = urljoin(self.base_url, TOKEN_ENDPOINT)
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = {
             "client_id": self.config.client_id,
@@ -117,7 +115,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
         }
         try:
             response = self.session.post(
-                url,
+                TOKEN_ENDPOINT,
                 data=data,
                 headers=headers,
                 verify=True,
@@ -135,13 +133,13 @@ class SantanderApiClient(SantanderAbstractApiClient):
         return token_data
 
     def _prepare_url(self, endpoint: str) -> str:
-        url = urljoin(self.base_url, endpoint).lower()
-
-        if ":workspaceid" in url:
+        endpoint = endpoint.lower()
+        if ":workspaceid" in endpoint:
             if not self.config.workspace_id:
                 raise SantanderClientException("ID da workspace não configurado")
-            url = url.replace(":workspaceid", self.config.workspace_id)
-        return url
+            endpoint = endpoint.replace(":workspaceid", self.config.workspace_id)
+
+        return endpoint
 
     def _request(
         self,
