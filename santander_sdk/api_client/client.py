@@ -46,10 +46,11 @@ class SantanderApiClient(SantanderAbstractApiClient):
 
     def __init__(self, config: SantanderClientConfiguration):
         self.config = config
-        self._set_default_workspace_id()
-
         self.session = BaseURLSession(base_url=config.base_url)
+        self.session.cert = config.cert
         self.session.auth = SantanderAuth.from_config(config)
+
+        self._set_default_workspace_id()
 
     def _set_default_workspace_id(self):
         if not self.config.workspace_id:
