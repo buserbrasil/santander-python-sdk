@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import requests
 
+from santander_sdk.api_client.auth import SantanderAuth
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.workspaces import get_first_workspace_id_of_type
 
@@ -45,11 +46,10 @@ class SantanderApiClient(SantanderAbstractApiClient):
 
     def __init__(self, config: SantanderClientConfiguration):
         self.config = config
-        self.session = BaseURLSession(base_url=config.base_url)
-        self.token = None
-        self.token_expires_at = datetime.now()
-
         self._set_default_workspace_id()
+
+        self.session = BaseURLSession(base_url=config.base_url)
+        self.session.auth = SantanderAuth.from_config(config)
 
     def _set_default_workspace_id(self):
         if not self.config.workspace_id:
@@ -77,61 +77,6 @@ class SantanderApiClient(SantanderAbstractApiClient):
     def patch(self, endpoint: str, data: dict) -> dict:
         return self._request("PATCH", endpoint, data=data)
 
-    @property
-    def is_authenticated(self) -> bool:
-        return bool(
-            self.token
-            and (self.token_expires_at - BEFORE_EXPIRE_TOKEN_SECONDS) > datetime.now()
-        )
-
-    def _ensure_requirements(self) -> None:
-        if not self.is_authenticated:
-            self._authenticate()
-
-    def _authenticate(self) -> None:
-        token_data = self._request_token()
-        self.token = token_data.get("access_token", "")
-        if not self.token:
-            raise SantanderClientException("Token de autenticação não encontrado")
-
-        self.token_expires_at = datetime.now() + timedelta(
-            seconds=token_data.get("expires_in", 120)
-        )
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {self.token}",
-                "X-Application-Key": self.config.client_id,
-            }
-        )
-        self.session.verify = True
-        self.session.cert = self.config.cert  # pyright: ignore
-
-    def _request_token(self) -> dict:
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = {
-            "client_id": self.config.client_id,
-            "client_secret": self.config.client_secret,
-            "grant_type": "client_credentials",
-        }
-        try:
-            response = self.session.post(
-                TOKEN_ENDPOINT,
-                data=data,
-                headers=headers,
-                verify=True,
-                timeout=60,
-                cert=self.config.cert,
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            status_code = getattr(e.response, "status_code", 0)
-            response = try_parse_response_to_json(e.response)
-            raise SantanderRequestException(
-                f"Erro na obtenção do Token: {e}", status_code, response
-            )
-        token_data = response.json()
-        return token_data
-
     def _prepare_url(self, endpoint: str) -> str:
         endpoint = endpoint.lower()
         if ":workspaceid" in endpoint:
@@ -148,9 +93,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
         data: dict | None = None,
         params: dict | None = None,
     ) -> dict:
-        self._ensure_requirements()
         url = self._prepare_url(endpoint)
-
         try:
             response = self.session.request(
                 method, url, json=data, params=params, timeout=60

@@ -132,14 +132,6 @@ def get_dict_token_response() -> dict:
     }
 
 
-def get_dict_token_request() -> dict:
-    return {
-        "client_id": "test_client_id",
-        "client_secret": "test_client_secret",
-        "grant_type": "client_credentials",
-    }
-
-
 def mock_create_pix_endpoint(
     mocker: Mocker,
     pix_id: str,
