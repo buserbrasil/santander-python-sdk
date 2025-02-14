@@ -4,7 +4,9 @@ from requests.auth import AuthBase
 
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
-from santander_sdk.api_client.exceptions import SantanderClientException
+from santander_sdk.api_client.exceptions import (
+    SantanderRequestException,
+)
 
 
 class SantanderAuth(AuthBase):
@@ -64,9 +66,14 @@ class SantanderAuth(AuthBase):
             response.raise_for_status()
         except HTTPError as e:
             if 400 <= e.response.status_code < 500:
-                raise SantanderClientException(e.response.json()["error_description"])
+                data = response.json()
+                raise SantanderRequestException(
+                    data["error_description"],
+                    status_code=e.response.status_code,
+                    content=data,
+                )
 
-            raise SantanderClientException(str(e))
+            raise SantanderRequestException(str(e), status_code=e.response.status_code)
 
         data = response.json()
         self.token = (
