@@ -73,7 +73,7 @@ class SantanderAuth(AuthBase):
                     content=data,
                 )
 
-            raise SantanderRequestException(str(e), status_code=e.response.status_code)
+            raise SantanderRequestException(data.get("error_description", "Unknown error."), status_code=e.response.status_code) from e
 
         data = response.json()
         self.token = (
