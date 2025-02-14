@@ -7,6 +7,8 @@ from santander_sdk.api_client.client_configuration import SantanderClientConfigu
 
 class SantanderAuth(AuthBase):
     TOKEN_ENDPOINT = "/auth/oauth/v2/token"
+    TIMEOUT_SECS = 60
+    BEFORE_EXPIRE_TOKEN = timedelta(seconds=60)
 
     def __init__(self, base_url, client_id, client_secret, cert_path):
         self.base_url = base_url
@@ -15,7 +17,7 @@ class SantanderAuth(AuthBase):
         self.cert_path = cert_path
 
         self._token = None
-        self._token_expires_at = None
+        self.expires_at = None
 
     @classmethod
     def from_config(cls, config: SantanderClientConfiguration):
@@ -40,7 +42,7 @@ class SantanderAuth(AuthBase):
 
     @token.setter
     def token(self, values):
-        self._token, self._token_expires_at = values
+        self._token, self.expires_at = values
 
     def renew(self):
         session = BaseURLSession(base_url=self.base_url)
@@ -54,19 +56,19 @@ class SantanderAuth(AuthBase):
                 "grant_type": "client_credentials",
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=60,
+            timeout=self.TIMEOUT_SECS,
         )
         response.raise_for_status()
+        data = response.json()
 
-        token_data = response.json()
         self.token = (
-            token_data["access_token"],
-            datetime.now() + timedelta(seconds=token_data["expires_in"]),
+            data["access_token"],
+            datetime.now() + timedelta(seconds=data["expires_in"]),
         )
 
     @property
     def is_expired(self):
-        if self._token_expires_at is None:
+        if not self.expires_at:
             return True
 
-        return datetime.now() > self._token_expires_at
+        return datetime.now() > self.expires_at - self.BEFORE_EXPIRE_TOKEN
