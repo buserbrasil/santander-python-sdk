@@ -1,8 +1,10 @@
 from datetime import datetime, timedelta
+from requests import HTTPError
 from requests.auth import AuthBase
 
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
+from santander_sdk.api_client.exceptions import SantanderClientException
 
 
 class SantanderAuth(AuthBase):
@@ -58,7 +60,11 @@ class SantanderAuth(AuthBase):
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=self.TIMEOUT_SECS,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except HTTPError as e:
+            raise SantanderClientException(e.response.json()["error_description"])
+
         data = response.json()
 
         self.token = (

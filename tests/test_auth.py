@@ -6,6 +6,7 @@ from freezegun import freeze_time
 from requests import PreparedRequest
 
 from santander_sdk.api_client.auth import SantanderAuth
+from santander_sdk.api_client.exceptions import SantanderClientException
 
 
 @pytest.fixture
@@ -60,3 +61,16 @@ def test_renew_token_when_expired(auth, responses):
 def test_is_expired(auth, expires_at, expected):
     auth.expires_at = expires_at
     assert auth.is_expired is expected
+
+
+def test_invalid_credentials(auth, responses):
+    responses.add(
+        responses.POST,
+        regex(".+/auth/oauth/v2/token"),
+        json={"error": "unauthorized_client", "error_description": "Invalid client credentials"},
+        status=401
+    )
+
+    with pytest.raises(SantanderClientException, match="Invalid client credentials"):
+        req = PreparedRequest()
+        req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
