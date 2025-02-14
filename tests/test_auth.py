@@ -16,7 +16,7 @@ def auth():
     return SantanderAuth(
         "https://api.santander.com.br",
         client_id="123",
-        client_secret="secert",
+        client_secret="secret",
         cert_path="/var/certs/cert.pem",
     )
 
@@ -27,7 +27,7 @@ def test_from_config():
         client_secret="secret",
         cert="/var/cets/cert.pem",
         base_url="https://api.santandare.com.br",
-        workspace_id=1
+        workspace_id=1,
     )
 
     auth = SantanderAuth.from_config(config)
@@ -86,8 +86,11 @@ def test_invalid_credentials(auth, responses):
     responses.add(
         responses.POST,
         regex(".+/auth/oauth/v2/token"),
-        json={"error": "unauthorized_client", "error_description": "Invalid client credentials"},
-        status=401
+        json={
+            "error": "unauthorized_client",
+            "error_description": "Invalid client credentials",
+        },
+        status=401,
     )
 
     with pytest.raises(SantanderClientException, match="Invalid client credentials"):

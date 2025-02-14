@@ -63,10 +63,12 @@ class SantanderAuth(AuthBase):
         try:
             response.raise_for_status()
         except HTTPError as e:
-            raise SantanderClientException(e.response.json()["error_description"])
+            if 400 <= e.response.status_code < 500:
+                raise SantanderClientException(e.response.json()["error_description"])
+
+            raise SantanderClientException(str(e))
 
         data = response.json()
-
         self.token = (
             data["access_token"],
             datetime.now() + timedelta(seconds=data["expires_in"]),
