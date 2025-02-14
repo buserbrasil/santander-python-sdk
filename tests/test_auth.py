@@ -25,13 +25,13 @@ def test_from_config():
         client_id="buser",
         client_secret="secret",
         cert="/var/cets/cert.pem",
-        base_url="https://api.santandare.com.br",
+        base_url="https://api.santander.com.br",
         workspace_id=1,
     )
 
     auth = SantanderAuth.from_config(config)
 
-    assert auth.base_url == "https://api.santandare.com.br"
+    assert auth.base_url == "https://api.santander.com.br"
     assert auth.cert_path == "/var/cets/cert.pem"
     assert auth.client_id == "buser"
     assert auth.client_secret == "secret"
