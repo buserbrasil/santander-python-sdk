@@ -1,4 +1,3 @@
-from http import client
 from re import compile as regex
 from datetime import datetime
 
@@ -94,5 +93,17 @@ def test_invalid_credentials(auth, responses):
     )
 
     with pytest.raises(SantanderClientException, match="Invalid client credentials"):
+        req = PreparedRequest()
+        req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
+
+
+def test_server_error(auth, responses):
+    responses.add(
+        responses.POST,
+        regex(".+/auth/oauth/v2/token"),
+        status=500,
+    )
+
+    with pytest.raises(SantanderClientException, match="500 Server Error"):
         req = PreparedRequest()
         req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
