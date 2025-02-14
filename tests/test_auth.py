@@ -1,3 +1,4 @@
+from http import client
 from re import compile as regex
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from freezegun import freeze_time
 from requests import PreparedRequest
 
 from santander_sdk.api_client.auth import SantanderAuth
+from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
 from santander_sdk.api_client.exceptions import SantanderClientException
 
 
@@ -17,6 +19,23 @@ def auth():
         client_secret="secert",
         cert_path="/var/certs/cert.pem",
     )
+
+
+def test_from_config():
+    config = SantanderClientConfiguration(
+        client_id="buser",
+        client_secret="secret",
+        cert="/var/cets/cert.pem",
+        base_url="https://api.santandare.com.br",
+        workspace_id=1
+    )
+
+    auth = SantanderAuth.from_config(config)
+
+    assert auth.base_url == "https://api.santandare.com.br"
+    assert auth.cert_path == "/var/cets/cert.pem"
+    assert auth.client_id == "buser"
+    assert auth.client_secret == "secret"
 
 
 def test_renew_when_token_empty(auth, responses):
