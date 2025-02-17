@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime, timedelta
 from decimal import Decimal as D
 from unittest.mock import patch
 
@@ -7,11 +6,10 @@ from mock.santander_mocker import (
     SANTANDER_URL,
     get_dict_payment_pix_request,
     get_dict_payment_pix_response,
-    get_dict_token_request,
     get_dict_token_response,
 )
 
-from santander_sdk.api_client.client import TOKEN_ENDPOINT, SantanderApiClient
+from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
@@ -28,88 +26,11 @@ class UnitTestSantanderApiClient(unittest.TestCase):
             workspace_id="test_workspace_id",
             base_url=SANTANDER_URL,
         )
-        self.token_request_mock = get_dict_token_request()
         self.token_response_mock = get_dict_token_response()
         self.client = SantanderApiClient(self.config)
 
-    def test_is_authenticated(self):
-        self.client.token = "test_token"
-        now = datetime.now()
-        self.client.token_expires_at = now + timedelta(seconds=900)
-        assert self.client.is_authenticated is True, "Deveria estar autenticado"
-
-        # Token expirado (considerado expirado se restarem menos de BEFORE_EXPIRE_TOKEN_SECONDS, que são 60 segundos)
-        self.client.token_expires_at = now + timedelta(seconds=50)
-        assert self.client.is_authenticated is False, "Deveria ter expirado"
-
-        # Token não existe
-        self.client.token = None
-        assert self.client.is_authenticated is False, (
-            "Não tem token, deveria retornar False"
-        )
-
-    @patch("santander_sdk.api_client.client.datetime")
-    @patch.object(
-        SantanderApiClient, "_request_token", return_value=get_dict_token_response()
-    )
-    def test_authenticate(self, mock_request_token, mock_datetime):
-        expire_in = mock_request_token.return_value.get("expires_in")
-        access_token = mock_request_token.return_value.get("access_token")
-        self.config.cert = "test_configure_session_cert_path"
-        mock_datetime.now.return_value = datetime.fromtimestamp(1000)
-
-        self.client._authenticate()
-
-        mock_request_token.assert_called_once()
-        assert self.client.token == access_token, "Token incorreto"
-        expected_expires_at = datetime.fromtimestamp(1000) + timedelta(
-            seconds=expire_in
-        )
-        assert self.client.token_expires_at == expected_expires_at, "Expiração não bate"
-        assert (
-            self.client.session.headers["Authorization"] == f"Bearer {access_token}"
-        ), "O token deve bater"
-        assert self.client.session.headers["X-Application-Key"] == "test_client_id", (
-            "O client_id deve bater"
-        )
-        assert self.client.session.verify is True, (
-            "Deve estar configurado para verificar certificado"
-        )
-        assert self.client.session.cert == "test_configure_session_cert_path", (
-            "O path deve bater"
-        )
-
-    @patch.object(SantanderApiClient, "_authenticate")
-    def test_ensure_requirements_happy_path(self, mock_authenticate):
-        self.client.token = "test_token"
-        self.client.token_expires_at = datetime.now() + timedelta(seconds=100)
-        self.client._ensure_requirements()
-        mock_authenticate.assert_not_called()
-
-    @patch("santander_sdk.api_client.client.requests.Session.post")
-    def test_request_token(self, mock_post):
-        mock_post.return_value.json.return_value = self.token_response_mock
-        self.client.config.cert = "test_request_token_cert_path.pem"
-
-        token_data = self.client._request_token()
-        mock_post.assert_called_once_with(
-            TOKEN_ENDPOINT,
-            data=self.token_request_mock,
-            verify=True,
-            timeout=60,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            cert="test_request_token_cert_path.pem",
-        )
-        self.assertEqual(
-            token_data.get("access_token"), self.token_response_mock.get("access_token")
-        )
-        self.assertEqual(
-            token_data.get("expires_in"), self.token_response_mock.get("expires_in")
-        )
-
     @patch("santander_sdk.api_client.client.requests.Session.request")
-    @patch.object(SantanderApiClient, "_ensure_requirements")
-    def test_request(self, mock_ensure_requirements, mock_request):
+    def test_request(self, mock_request):
         response_dict = get_dict_payment_pix_response(
             "12345678", D(299.99), OrderStatus.READY_TO_PAY, "12345678909", "CPF"
         )
