@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from requests import HTTPError
+from requests import HTTPError, JSONDecodeError
 from requests.auth import AuthBase
 
 from santander_sdk.api_client.base import BaseURLSession
@@ -65,15 +65,16 @@ class SantanderAuth(AuthBase):
         try:
             response.raise_for_status()
         except HTTPError as e:
-            if 400 <= e.response.status_code < 500:
-                data = response.json()
-                raise SantanderRequestException(
-                    data["error_description"],
-                    status_code=e.response.status_code,
-                    content=data,
-                )
+            try:
+                error_data = response.json()
+            except JSONDecodeError:
+                error_data = {}
 
-            raise SantanderRequestException(data.get("error_description", "Unknown error."), status_code=e.response.status_code) from e
+            raise SantanderRequestException(
+                error_data.get("error_description", str(e)),
+                status_code=e.response.status_code,
+                content=error_data,
+            ) from e
 
         data = response.json()
         self.token = (
