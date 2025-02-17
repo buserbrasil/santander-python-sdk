@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
+
 from requests import HTTPError, JSONDecodeError
 from requests.auth import AuthBase
 
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
-from santander_sdk.api_client.exceptions import (
-    SantanderRequestException,
-)
+from santander_sdk.api_client.exceptions import SantanderRequestException
 
 
 class SantanderAuth(AuthBase):
