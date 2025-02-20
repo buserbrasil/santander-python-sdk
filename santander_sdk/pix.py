@@ -65,7 +65,7 @@ def transfer_pix(
             client, pix_key, value, description, tags
         )
         pix_id = create_pix_response.get("id")
-        logger.info("Santander - PIX criado com sucesso: {pix_id}")
+        logger.info("Santander - PIX criado com sucesso: %s", pix_id)
         payment_status = create_pix_response.get("status")
 
         if not pix_id:
