@@ -1,82 +1,150 @@
-# Santander Client API (Não Oficial)
+# Santander Python SDK
 
-Este é um cliente não oficial para a API do Santander, desenvolvido em Python. Ele permite a integração com os serviços do Santander de forma simples e abstraida.
+An **unofficial** Python SDK for Santander's API that simplifies integration with Santander banking services.
 
-## Instalação
+## Features
 
-Para instalar o pacote, utilize o pip:
+- ✨ **Authentication**: Automatic token management
+- 💰 **Account Information**: Retrieve account and workspace details
+- 💸 **PIX Transfers**: Easy PIX payment processing
+- 📊 **Transaction History**: Query and track transactions
+- 🔒 **Secure**: Built-in security best practices
+
+## Installation
 
 ```bash
 pip install santander-python-sdk
-
-## Uso
 ```
-## Uso
+
+## Quick Start
 
 ```python
 from decimal import Decimal
-from santander_sdk import (
-  SantanderApiClient,
-  SantanderClientConfiguration
-  SantanderBeneficiary,
-)
-from santander_sdk.pix import transfer_pix, get_transfer
+from santander_sdk import SantanderApiClient, SantanderClientConfiguration
 
-# Setup do client
-client = SantanderApiClient(SantanderClientConfiguration(
-  client_id="client_id",
-  client_secret="client_pk",
-  cert="certificate_path",
-  base_url="api_url",
-  workspace_id="optional"
-))
-
-# Exemplo 1 - PIX para uma chave (Telefone, email, chave aleatória, cpf ou cpnj)
-transfer = transfer_pix(
-    client,
-    pix_key="alice@example.com",
-    value=Decimal(0.99),
-    description="My first pix payment"
+# Initialize the client
+client = SantanderApiClient(
+    SantanderClientConfiguration(
+        client_id="your_client_id",
+        client_secret="your_client_secret",
+        cert="path_to_certificate",
+        base_url="api_url",
+        workspace_id="optional_workspace_id"
+    )
 )
 
-# Exemplo 2 - Transferência pix via beneficiário:
-benefiary = SantanderBeneficiary(
-    name="John Doe",
-    bankCode="404",
-    branch="2424",
-    number="123456789", # Número da conta com dígito verificador
-    type="CONTA_CORRENTE",
-    documentType="CPF",
-    documentNumber="12345678909",
-)
+# Make a simple PIX transfer
+from santander_sdk.pix import transfer_pix
 
 transfer = transfer_pix(
     client,
-    benefiary,
-    value=Decimal(0.99),
-    description="My second pix payment by beneficiary"
+    pix_key="recipient@email.com",
+    value=Decimal("50.00"),
+    description="Lunch payment"
 )
 
+# Check transfer status
+from santander_sdk.pix import get_transfer
 
-# Exemplo 3 - Consulta de um pix realizado 
-transfer = get_transfer(transfer["id"])
-assert transfer["status"] == "PAYED"
-
-
+status = get_transfer(transfer["id"])
+print(f"Transfer status: {status['status']}")
 ```
 
-## Funcionalidades
+## Advanced Usage
 
-- **Autenticação**: Gerenciamento de tokens de acesso.
-- **Informações da Conta**: Recuperação de detalhes da conta como workspace.
-- **Transações**: Consulta de transações realizadas.
-- **Pagamentos**: Realização de pagamentos e transferências pix com abstração do fluxo.
+### PIX Transfer to Bank Account
 
+```python
+from santander_sdk import SantanderBeneficiary
 
-## Licença
+# Create beneficiary
+beneficiary = SantanderBeneficiary(
+    name="John Doe",
+    bankCode="404",  # Santander bank code
+    branch="2424",
+    number="123456789",  # Account number with check digit
+    type="CONTA_CORRENTE",
+    documentType="CPF",
+    documentNumber="12345678909"
+)
 
-Este projeto está licenciado sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+# Make transfer
+transfer = transfer_pix(
+    client,
+    beneficiary,
+    value=Decimal("100.00"),
+    description="Rent payment"
+)
+```
 
-## Aviso Legal
+## Contributing
 
-Este projeto não é afiliado, endossado ou patrocinado pelo Santander.
+We welcome contributions! Here's how you can help:
+
+### Setting up Development Environment
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/yourusername/santander-python-sdk
+cd santander-python-sdk
+```
+
+2. Create a virtual environment
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install development dependencies
+
+```bash
+pip install -e ".[dev]"
+```
+
+### Development Guidelines
+
+- Write tests for new features using pytest
+- Follow PEP 8 style guide
+- Add docstrings to new functions and classes
+- Update documentation when adding features
+
+### Running Tests
+
+```bash
+pytest tests/
+```
+
+### Submitting Changes
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## Support
+
+- 📫 Open an issue for bugs or feature requests
+- 💬 Join our [Discord community](link-to-discord) for discussions
+- 📖 Check our [FAQ](link-to-faq) for common questions
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Security
+
+For security concerns, please email <foss@buser.com.br>.
+
+## Acknowledgments
+
+- Thanks to all contributors who have helped shape this SDK
+- Built with support from the Python community
+
+---
+
+⭐ If you find this SDK helpful, please star the repository!
