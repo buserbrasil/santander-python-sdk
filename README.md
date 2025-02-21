@@ -2,6 +2,8 @@
 
 An **unofficial** Python SDK for Santander's API that simplifies integration with Santander banking services.
 
+[![test](https://github.com/buserbrasil/santander-python-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/buserbrasil/santander-python-sdk/actions/workflows/test.yml)
+
 ## Features
 
 - ✨ **Authentication**: Automatic token management
