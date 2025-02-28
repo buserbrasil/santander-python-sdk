@@ -22,6 +22,7 @@ from santander_sdk.types import (
 logger = logging.getLogger("santanderLogger")
 PIX_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments"
 
+
 def transfer_pix(
     client: SantanderApiClient,
     pix_key: str | SantanderBeneficiary,
@@ -32,9 +33,9 @@ def transfer_pix(
     try:
         if value is None or value <= 0:
             raise SantanderValueError(f"Invalid value for PIX transfer: {value}")
-    
+
         transfer_flow = SantanderPaymentFlow(client, logger, PIX_ENDPOINT)
-        
+
         create_pix_dict = _generate_create_pix_dict(pix_key, value, description, tags)
         create_pix_response = transfer_flow.create_payment(create_pix_dict)
         if not create_pix_response.get("id"):
@@ -47,7 +48,9 @@ def transfer_pix(
             "status": "AUTHORIZED",
             "paymentValue": truncate_value(value),
         }
-        confirm_response = transfer_flow.confirm_payment(payment_data, create_pix_response.get('id'))
+        confirm_response = transfer_flow.confirm_payment(
+            payment_data, create_pix_response.get("id")
+        )
         return {"success": True, "data": confirm_response, "error": ""}
     except Exception as e:
         error_message = str(e)
@@ -79,7 +82,7 @@ def _generate_create_pix_dict(
         pix_type = get_pix_key_type(pix_key)
         data.update({"dictCode": pix_key, "dictCodeType": pix_type})
         return data
-    
+
     if isinstance(pix_key, dict):
         beneficiary = cast(dict, pix_key.copy())
         if beneficiary.get("bankCode") is None and beneficiary.get("ispb") is None:

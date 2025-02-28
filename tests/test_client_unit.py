@@ -33,7 +33,9 @@ def test_request(mock_request, client):
     response_dict = get_dict_payment_pix_response(
         "12345678", D(299.99), OrderStatus.READY_TO_PAY, "12345678909", "CPF"
     )
-    request_dict = get_dict_payment_pix_request("12345678", D(299.99), "12345678909", "CPF")
+    request_dict = get_dict_payment_pix_request(
+        "12345678", D(299.99), "12345678909", "CPF"
+    )
     mock_request.return_value.json.return_value = response_dict
     response_data = client._request("GET", "/test_endpoint")
     assert response_data == response_dict
@@ -42,9 +44,7 @@ def test_request(mock_request, client):
     )
 
     mock_request.reset_mock()
-    response_data = client._request(
-        "POST", "/test_endpoint", data=request_dict
-    )
+    response_data = client._request("POST", "/test_endpoint", data=request_dict)
     assert response_data == response_dict
     mock_request.assert_called_once_with(
         "POST",

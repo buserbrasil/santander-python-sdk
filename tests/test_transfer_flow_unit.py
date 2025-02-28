@@ -17,22 +17,27 @@ PIX_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid/pix_pay
 def api_client():
     return MagicMock()
 
+
 @pytest.fixture
 def payment_flow(api_client):
     logger = MagicMock()
     return SantanderPaymentFlow(api_client, logger, PIX_ENDPOINT)
+
 
 @pytest.fixture
 def mock_sleep():
     with patch("santander_sdk.transfer_flow.sleep", return_value=None) as mock:
         yield mock
 
+
 @pytest.fixture
 def lazy_status_update(api_client):
     def _lazy_status_update(payment_id, statuses):
         api_client.get.side_effect = [
-            get_dict_payment_pix_response(payment_id, D("100.00"), status) for status in statuses
+            get_dict_payment_pix_response(payment_id, D("100.00"), status)
+            for status in statuses
         ]
+
     return _lazy_status_update
 
 
@@ -56,11 +61,14 @@ def test_ensure_ready_to_pay(payment_flow, api_client):
 
 def test_ensure_ready_to_pay_lazy(payment_flow, api_client, lazy_status_update):
     confirm_data = {"id": "12345", "status": OrderStatus.PENDING_VALIDATION}
-    lazy_status_update("12345", [
-        OrderStatus.PENDING_CONFIRMATION,
-        OrderStatus.PENDING_VALIDATION,
-        OrderStatus.READY_TO_PAY,
-    ])
+    lazy_status_update(
+        "12345",
+        [
+            OrderStatus.PENDING_CONFIRMATION,
+            OrderStatus.PENDING_VALIDATION,
+            OrderStatus.READY_TO_PAY,
+        ],
+    )
     payment_flow.ensure_ready_to_pay(confirm_data)
     assert api_client.get.call_count == 3
 
@@ -73,7 +81,9 @@ def test_confirm_payment(payment_flow, api_client):
 
     result = payment_flow.confirm_payment(confirm_data, payment_id)
     assert result == response
-    api_client.patch.assert_called_once_with(f"{PIX_ENDPOINT}/{payment_id}", data=confirm_data)
+    api_client.patch.assert_called_once_with(
+        f"{PIX_ENDPOINT}/{payment_id}", data=confirm_data
+    )
 
 
 def test_check_for_rejected_error(payment_flow):
@@ -100,21 +110,33 @@ def test_request_confirm_payment(payment_flow, api_client):
 
     result = payment_flow._request_confirm_payment(confirm_data, payment_id)
     assert result == response
-    api_client.patch.assert_called_once_with(f"{PIX_ENDPOINT}/{payment_id}", data=confirm_data)
+    api_client.patch.assert_called_once_with(
+        f"{PIX_ENDPOINT}/{payment_id}", data=confirm_data
+    )
 
 
 @pytest.mark.parametrize("attemps_to_be_ready", [0, 2])
-def test_payment_status_polling(payment_flow, api_client, mock_sleep, lazy_status_update, attemps_to_be_ready):
+def test_payment_status_polling(
+    payment_flow, api_client, mock_sleep, lazy_status_update, attemps_to_be_ready
+):
     payment_id = "12345"
-    lazy_status_update(payment_id, [OrderStatus.PENDING_VALIDATION] * attemps_to_be_ready + [OrderStatus.READY_TO_PAY])
+    lazy_status_update(
+        payment_id,
+        [OrderStatus.PENDING_VALIDATION] * attemps_to_be_ready
+        + [OrderStatus.READY_TO_PAY],
+    )
 
-    result = payment_flow._payment_status_polling(payment_id, [OrderStatus.READY_TO_PAY], 10)
-    assert result.get('status') == OrderStatus.READY_TO_PAY
+    result = payment_flow._payment_status_polling(
+        payment_id, [OrderStatus.READY_TO_PAY], 10
+    )
+    assert result.get("status") == OrderStatus.READY_TO_PAY
     api_client.get.assert_called_with(f"{PIX_ENDPOINT}/{payment_id}")
     assert mock_sleep.call_count == attemps_to_be_ready
 
 
-def test_payment_status_polling_timeout(payment_flow, api_client, mock_sleep, lazy_status_update):
+def test_payment_status_polling_timeout(
+    payment_flow, api_client, mock_sleep, lazy_status_update
+):
     payment_id = "12345"
     lazy_status_update(payment_id, [OrderStatus.PENDING_VALIDATION] * 3)
 
