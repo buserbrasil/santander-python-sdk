@@ -10,9 +10,8 @@ from santander_sdk.api_client.workspaces import get_first_workspace_id_of_type
 from .abstract_client import SantanderAbstractApiClient
 from .client_configuration import SantanderClientConfiguration
 from .exceptions import (
-    SantanderClientException,
-    SantanderRequestException,
-    SantanderWorkspaceException,
+    SantanderClientError,
+    SantanderRequestError,
 )
 from .helpers import get_status_code_description, try_parse_response_to_json
 
@@ -39,8 +38,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
     #### Exceções:
     - SantanderClientException: O fluxo não seguiu conforme o esperado ou houve na troca de informações com a API
     - SantanderRequestException: Lançado em caso de códigos de retorno HTTP diferentes de 2xx.
-    - SantanderConfigurationException: Há um erro a nível de configuração do cliente Santander.
-    - SantanderWorkspaceException: Erro na obtenção ou configuração da workspace.
+    - SantanderClientError: Há um erro a nível de configuração do cliente Santander.
 
     """
 
@@ -56,7 +54,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
         if not self.config.workspace_id:
             workspace_id = get_first_workspace_id_of_type(self, "PAYMENTS")
             if not workspace_id:
-                raise SantanderWorkspaceException(
+                raise SantanderClientError(
                     "Conta sem configuração de workspace na configuração e na conta."
                 )
 
@@ -82,7 +80,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
         endpoint = endpoint.lower()
         if ":workspaceid" in endpoint:
             if not self.config.workspace_id:
-                raise SantanderClientException("ID da workspace não configurado")
+                raise SantanderClientError("ID da workspace não configurado")
             endpoint = endpoint.replace(":workspaceid", self.config.workspace_id)
 
         return endpoint
@@ -106,8 +104,8 @@ class SantanderApiClient(SantanderAbstractApiClient):
             error_content = try_parse_response_to_json(e.response)
             status_description = get_status_code_description(status_code)
 
-            raise SantanderRequestException(
+            raise SantanderRequestError(
                 status_description, status_code, error_content
             )
         except Exception as e:
-            raise SantanderRequestException(f"Erro na requisição: {e}", 0, None) from e
+            raise SantanderRequestError(f"Erro na requisição: {e}", 0, None) from e

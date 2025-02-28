@@ -7,7 +7,7 @@ from requests import PreparedRequest
 
 from santander_sdk.api_client.auth import SantanderAuth
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
-from santander_sdk.api_client.exceptions import SantanderRequestException
+from santander_sdk.api_client.exceptions import SantanderRequestError
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def test_invalid_credentials(auth, responses):
     )
 
     with pytest.raises(
-        SantanderRequestException, match="Invalid client credentials"
+        SantanderRequestError, match="Invalid client credentials"
     ) as exc:
         req = PreparedRequest()
         req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
@@ -112,6 +112,6 @@ def test_server_error(auth, responses):
         status=500,
     )
 
-    with pytest.raises(SantanderRequestException, match="500 Server Error"):
+    with pytest.raises(SantanderRequestError, match="500 Server Error"):
         req = PreparedRequest()
         req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
