@@ -1,7 +1,7 @@
 from typing import Literal
 
 from .abstract_client import SantanderAbstractApiClient
-from .exceptions import SantanderClientException
+from .exceptions import SantanderClientError
 
 """
     Para ter acesso ao sistema cliente e consumir as APIs, se faz necessário ter o cadastro de
@@ -49,9 +49,9 @@ def get_first_workspace_id_of_type(
 
 def _check_client_instance(client):
     if not client:
-        raise SantanderClientException("O client é obrigatório")
+        raise SantanderClientError("O client é obrigatório")
 
     if not issubclass(client.__class__, SantanderAbstractApiClient):
-        raise SantanderClientException(
+        raise SantanderClientError(
             "O client deve ser uma instância de Herança de BaseSantanderApiClient"
         )

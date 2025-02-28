@@ -2,11 +2,8 @@ import pytest
 import requests_mock
 from decimal import Decimal
 from santander_sdk.api_client.client import SantanderApiClient
-from santander_sdk.pix import (
-    MAX_UPDATE_STATUS_ATTEMPTS,
-    MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM,
-    transfer_pix,
-)
+from santander_sdk.transfer_flow import (MAX_UPDATE_STATUS_AFTER_CONFIRM, MAX_UPDATE_STATUS_BEFORE_CONFIRM)
+from santander_sdk.pix import transfer_pix
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,
     santander_beneciary_john,
@@ -23,7 +20,7 @@ from santander_sdk.types import OrderStatus
 
 @pytest.fixture
 def mock_api(mocker):
-    mocker.patch("santander_sdk.pix.sleep", return_value=None)
+    mocker.patch("santander_sdk.transfer_flow.sleep", return_value=None)
     with requests_mock.Mocker() as m:
         mock_get_workspaces_endpoint(m)
         mock_token_endpoint(m)
@@ -110,11 +107,11 @@ def test_transfer_pix_payment_timeout_create(api_client: SantanderApiClient, moc
 
     assert transfer_result == {
         "success": False,
-        "error": "Timeout na atualização do status após várias tentativas: Santander - Limite de tentativas de atualização do status do pagamento PIX atingido",
+        "error": "Status update timeout after several attempts: Santander - Status update attempt limit reached",
         "data": None,
     }
     assert mock_create.call_count == 1
-    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS
+    assert mock_status.call_count == MAX_UPDATE_STATUS_BEFORE_CONFIRM
 
 
 def test_transfer_pix_payment_timeout_before_authorize(
@@ -172,7 +169,7 @@ def test_transfer_pix_payment_timeout_before_authorize(
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
-    assert mock_status.call_count == MAX_UPDATE_STATUS_ATTEMPTS_TO_CONFIRM
+    assert mock_status.call_count == MAX_UPDATE_STATUS_AFTER_CONFIRM
 
 
 def test_transfer_pix_payment_rejected_on_create(
@@ -190,7 +187,7 @@ def test_transfer_pix_payment_rejected_on_create(
     transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
-        "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Criação do pagamento PIX - Motivo não retornado pelo Santander",
+        "error": "Payment rejection: Santander - Payment rejected by the bank at step CREATE - Reason not returned by Santander",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -217,7 +214,7 @@ def test_transfer_pix_payment_rejected_on_confirm(
     transfer_result = transfer_pix(api_client, pix_key, value, description)
     assert transfer_result == {
         "success": False,
-        "error": "Rejeição de pagamento: Santander - Pagamento rejeitado pelo banco na etapa Confirmação do pagamento PIX - Motivo não retornado pelo Santander",
+        "error": "Payment rejection: Santander - Payment rejected by the bank at step CONFIRM - Reason not returned by Santander",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -362,8 +359,6 @@ def test_transfer_pix_payment_lazy_status_update(
         },
         "error": "",
     }
-    assert mock_create.call_count == 1, "Deveria ter chamado a criação do PIX uma vez"
-    assert mock_confirm.call_count == 1, (
-        "Deveria ter chamado a confirmação do PIX uma vez"
-    )
-    assert mock_status.call_count == 3, "Deveria ter chamado o status do PIX três vezes"
+    assert mock_create.call_count == 1
+    assert mock_confirm.call_count == 1
+    assert mock_status.call_count == 3
