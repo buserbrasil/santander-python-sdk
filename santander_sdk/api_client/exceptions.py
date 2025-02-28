@@ -17,7 +17,9 @@ class SantanderRequestError(SantanderError):
 
     def __str__(self):
         error_content = self.content or "No response details"
-        return f"Request failed: {super().__str__()} - {self.status_code} {error_content}"
+        return (
+            f"Request failed: {super().__str__()} - {self.status_code} {error_content}"
+        )
 
 
 class SantanderClientError(SantanderError):
@@ -26,6 +28,7 @@ class SantanderClientError(SantanderError):
 
     def __str__(self):
         return f"Santander client error: {super().__str__()}"
+
 
 class SantanderValueError(SantanderError, ValueError):
     def __init__(self, message):
@@ -50,4 +53,3 @@ class SantanderStatusTimeoutError(SantanderError):
 
     def __str__(self):
         return f"Status update timeout after several attempts: {super().__str__()}"
-

@@ -2,7 +2,10 @@ import pytest
 import requests_mock
 from decimal import Decimal
 from santander_sdk.api_client.client import SantanderApiClient
-from santander_sdk.transfer_flow import (MAX_UPDATE_STATUS_AFTER_CONFIRM, MAX_UPDATE_STATUS_BEFORE_CONFIRM)
+from santander_sdk.transfer_flow import (
+    MAX_UPDATE_STATUS_AFTER_CONFIRM,
+    MAX_UPDATE_STATUS_BEFORE_CONFIRM,
+)
 from santander_sdk.pix import transfer_pix
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,

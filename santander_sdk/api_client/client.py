@@ -104,8 +104,6 @@ class SantanderApiClient(SantanderAbstractApiClient):
             error_content = try_parse_response_to_json(e.response)
             status_description = get_status_code_description(status_code)
 
-            raise SantanderRequestError(
-                status_description, status_code, error_content
-            )
+            raise SantanderRequestError(status_description, status_code, error_content)
         except Exception as e:
             raise SantanderRequestError(f"Erro na requisição: {e}", 0, None) from e
