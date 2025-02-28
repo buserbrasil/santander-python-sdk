@@ -5,7 +5,7 @@ from requests.auth import AuthBase
 
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
-from santander_sdk.api_client.exceptions import SantanderRequestException
+from santander_sdk.api_client.exceptions import SantanderRequestError
 
 
 class SantanderAuth(AuthBase):
@@ -69,7 +69,7 @@ class SantanderAuth(AuthBase):
             except JSONDecodeError:
                 error_data = {}
 
-            raise SantanderRequestException(
+            raise SantanderRequestError(
                 error_data.get("error_description", str(e)),
                 status_code=e.response.status_code,
                 content=error_data,

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from santander_sdk.api_client.exceptions import SantanderClientException
+from santander_sdk.api_client.exceptions import SantanderClientError
 from santander_sdk.api_client.workspaces import (
     WORKSPACES_ENDPOINT,
     get_workspaces,
@@ -56,5 +56,5 @@ class UnitTestWorkspaces(unittest.TestCase):
     def test_check_client_instance(self):
         _check_client_instance(self.mock_client)
 
-        with self.assertRaises(SantanderClientException):
+        with self.assertRaises(SantanderClientError):
             _check_client_instance(object())
