@@ -30,7 +30,10 @@ class SantanderPaymentFlow:
     current_step: Literal["CREATE", "CONFIRM"] = "CREATE"
 
     def __init__(
-        self, client: SantanderApiClient, endpoint: str, logger: logging.Logger | None = None
+        self,
+        client: SantanderApiClient,
+        endpoint: str,
+        logger: logging.Logger | None = None,
     ):
         self.client = client
         self.logger = logger or logging.getLogger(__name__)
