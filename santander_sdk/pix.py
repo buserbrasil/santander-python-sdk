@@ -34,7 +34,7 @@ def transfer_pix(
         if value is None or value <= 0:
             raise SantanderValueError(f"Invalid value for PIX transfer: {value}")
 
-        transfer_flow = SantanderPaymentFlow(client, logger, PIX_ENDPOINT)
+        transfer_flow = SantanderPaymentFlow(client, PIX_ENDPOINT, logger)
 
         create_pix_dict = _generate_create_pix_dict(pix_key, value, description, tags)
         create_pix_response = transfer_flow.create_payment(create_pix_dict)
