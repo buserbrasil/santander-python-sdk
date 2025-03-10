@@ -1,8 +1,5 @@
 from typing import Literal
 
-from .abstract_client import SantanderAbstractApiClient
-from .exceptions import SantanderClientError
-
 """
     Para ter acesso ao sistema cliente e consumir as APIs, se faz necessário ter o cadastro de
     uma ou mais Workspaces, sendo a Workspace a “porta de entrada” para ter o acesso ao Hub de
@@ -22,16 +19,12 @@ WorkspaceType = Literal["PHYSICAL_CORBAN", "PAYMENTS", "DIGITAL_CORBAN"]
 WORKSPACES_ENDPOINT = "/management_payments_partners/v1/workspaces"
 
 
-def get_workspaces(client: SantanderAbstractApiClient):
-    _check_client_instance(client)
+def get_workspaces(client):
     response = client.get(WORKSPACES_ENDPOINT)
     return response.get("_content", None)
 
 
-def get_first_workspace_id_of_type(
-    client: SantanderAbstractApiClient, workspace_type: WorkspaceType
-) -> str | None:
-    _check_client_instance(client)
+def get_first_workspace_id_of_type(client, workspace_type: WorkspaceType) -> str | None:
     workspaces = get_workspaces(client)
     if workspaces is None or len(workspaces) == 0:
         return None
@@ -45,13 +38,3 @@ def get_first_workspace_id_of_type(
         None,
     )
     return workspace_id
-
-
-def _check_client_instance(client):
-    if not client:
-        raise SantanderClientError("O client é obrigatório")
-
-    if not issubclass(client.__class__, SantanderAbstractApiClient):
-        raise SantanderClientError(
-            "O client deve ser uma instância de Herança de BaseSantanderApiClient"
-        )
