@@ -26,7 +26,7 @@ def test_from_config():
         client_secret="secret",
         cert="/var/cets/cert.pem",
         base_url="https://api.santander.com.br",
-        workspace_id=1,
+        workspace_id="1",
     )
 
     auth = SantanderAuth.from_config(config)

@@ -335,7 +335,6 @@ wheels = [
 
 [[package]]
 name = "santander-python-sdk"
-version = "0.2.3.dev4+dirty"
 source = { editable = "." }
 dependencies = [
     { name = "python-dateutil" },

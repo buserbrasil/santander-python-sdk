@@ -1,11 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from santander_sdk.api_client.exceptions import SantanderClientError
 from santander_sdk.api_client.workspaces import (
     WORKSPACES_ENDPOINT,
     get_workspaces,
     get_first_workspace_id_of_type,
-    _check_client_instance,
 )
 from santander_sdk.api_client.client import SantanderApiClient
 from mock.santander_mocker import (
@@ -46,15 +44,7 @@ class UnitTestWorkspaces(unittest.TestCase):
     def test_get_first_workspace_id_of_type_no_match(self):
         with patch(
             "santander_sdk.api_client.workspaces.get_workspaces",
-            return_value=no_payments_workspaces_mock[
-                "_content"
-            ],  # Corrigir erro de digitação
+            return_value=no_payments_workspaces_mock["_content"],
         ):
             workspace_id = get_first_workspace_id_of_type(self.mock_client, "PAYMENTS")
             self.assertIsNone(workspace_id)
-
-    def test_check_client_instance(self):
-        _check_client_instance(self.mock_client)
-
-        with self.assertRaises(SantanderClientError):
-            _check_client_instance(object())

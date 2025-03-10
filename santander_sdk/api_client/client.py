@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+import re
 
 import requests
 
@@ -7,7 +8,6 @@ from santander_sdk.api_client.auth import SantanderAuth
 from santander_sdk.api_client.base import BaseURLSession
 from santander_sdk.api_client.workspaces import get_first_workspace_id_of_type
 
-from .abstract_client import SantanderAbstractApiClient
 from .client_configuration import SantanderClientConfiguration
 from .exceptions import (
     SantanderClientError,
@@ -21,7 +21,7 @@ TOKEN_ENDPOINT = "/auth/oauth/v2/token"
 logger = logging.getLogger(__name__)
 
 
-class SantanderApiClient(SantanderAbstractApiClient):
+class SantanderApiClient:
     """
     Cliente base para requisições à API do Santander.
     Lida de forma auto gerenciada com requisitos, autenticação, token e manutenção de sessão com a API do Santander.
@@ -64,7 +64,7 @@ class SantanderApiClient(SantanderAbstractApiClient):
     def get(self, endpoint: str, params: dict | None = None) -> dict:
         return self._request("GET", endpoint, params=params)
 
-    def post(self, endpoint: str, data: dict) -> dict:
+    def post(self, endpoint: str, data: dict | None) -> dict:
         return self._request("POST", endpoint, data=data)
 
     def put(self, endpoint: str, data: dict) -> dict:
@@ -77,11 +77,12 @@ class SantanderApiClient(SantanderAbstractApiClient):
         return self._request("PATCH", endpoint, data=data)
 
     def _prepare_url(self, endpoint: str) -> str:
-        endpoint = endpoint.lower()
-        if ":workspaceid" in endpoint:
+        if ":workspaceid" in endpoint.lower():
             if not self.config.workspace_id:
                 raise SantanderClientError("ID da workspace não configurado")
-            endpoint = endpoint.replace(":workspaceid", self.config.workspace_id)
+            endpoint = re.sub(
+                ":workspaceid", self.config.workspace_id, endpoint, flags=re.IGNORECASE
+            )
 
         return endpoint
 

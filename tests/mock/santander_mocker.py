@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 
 from requests_mock import Mocker
 from requests_mock.adapter import _Matcher as Matcher
+from responses import RequestsMock
 
 from santander_sdk.api_client.client import TOKEN_ENDPOINT
 from santander_sdk.api_client.workspaces import WORKSPACES_ENDPOINT
@@ -11,6 +12,7 @@ from santander_sdk.pix import PIX_ENDPOINT
 from santander_sdk.types import SantanderBeneficiary, OrderStatus
 
 SANTANDER_URL = "https://trust-sandbox.api.santander.com.br"
+BASE_URL_RECEIPTS = "https://trust-sandbox.api.santander.com.br/consult_payment_receipts/v1/payment_receipts"
 TEST_WORKSPACE_ID = "8e33d56c-204f-461e-aebe-08baaab6479e"
 PIX_ENDPOINT_WITH_WORKSPACE = urljoin(
     SANTANDER_URL, PIX_ENDPOINT.replace(":workspaceid", TEST_WORKSPACE_ID)
@@ -120,16 +122,15 @@ def get_dict_workspace_response(
     }
 
 
-def get_dict_token_response() -> dict:
-    return {
-        "obs": "token mockado",
-        "access_token": "eyJraWQiOiI1MDZhY2QwYS0zN2M2LTQ2NjktYWYwZS0yODR..",
-        "expires_in": 900,
-        "token_type": "bearer",
-        "not-before-policy": 1614173461,
-        "session_state": "2ddeacf0-1e7d-4351-ba78-abb286373bd1",
-        "scope": "",
-    }
+dict_token_response = {
+    "obs": "token mockado",
+    "access_token": "eyJraWQiOiI1MDZhY2QwYS0zN2M2LTQ2NjktYWYwZS0yODR..",
+    "expires_in": 900,
+    "token_type": "bearer",
+    "not-before-policy": 1614173461,
+    "session_state": "2ddeacf0-1e7d-4351-ba78-abb286373bd1",
+    "scope": "",
+}
 
 
 def mock_create_pix_endpoint(
@@ -181,8 +182,7 @@ def mock_get_workspaces_endpoint(mocker: Mocker) -> Matcher:
 
 
 def mock_token_endpoint(mocker: Mocker) -> Matcher:
-    token_response = get_dict_token_response()
-    return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=token_response)
+    return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=dict_token_response)
 
 
 beneciary_john_dict_json = {
@@ -289,3 +289,71 @@ client_santander_client_config_mock = {
     "workspace_id": TEST_WORKSPACE_ID,
     "base_url": SANTANDER_URL,
 }
+
+
+def receipt_history_response_dict(
+    receipt_request_id,
+    receipt_stauts="REQUESTED",
+):
+    return {
+        "paymentReceiptsFileRequests": [
+            {
+                "request": {
+                    "requestId": receipt_request_id,
+                    "creationDateTime": "2025-03-07T12:32:38-03:00",
+                },
+                "file": {
+                    "fileRepository": {"location": None},
+                    "mimeType": "application/pdf",
+                    "expirationDate": None,
+                    "statusInfo": {"statusCode": receipt_stauts},
+                    "audit": {"creationDateTime": None},
+                },
+            }
+        ],
+        "links": {
+            "_first": {"href": f"{BASE_URL_RECEIPTS}?_offset=0&_limit=10"},
+            "_prev": None,
+            "_next": None,
+        },
+    }
+
+
+def receipt_response_dict(
+    receipt_request_id,
+    receipt_status="REQUESTED",
+    receipt_location: str | None = None,
+):
+    return {
+        "request": {
+            "requestId": receipt_request_id,
+            "creationDateTime": "2025-03-07T12:32:38-03:00",
+        },
+        "file": {
+            "fileRepository": {"location": receipt_location},
+            "mimeType": "application/pdf",
+            "expirationDate": "2025-04-07T12:32:38-03:00" if receipt_location else None,
+            "statusInfo": {"statusCode": receipt_status},
+            "audit": {
+                "creationDateTime": "2025-03-07T12:32:38-03:00"
+                if receipt_location
+                else None
+            },
+        },
+    }
+
+
+def mock_workspaces_endpoint(responses: RequestsMock) -> RequestsMock:
+    responses.add(
+        responses.GET,
+        urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT),
+        json=workspace_response_mock,
+    )
+    return responses
+
+
+def mock_auth_endpoint(responses: RequestsMock) -> RequestsMock:
+    responses.add(
+        responses.POST, urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=dict_token_response
+    )
+    return responses
