@@ -109,7 +109,7 @@ def create_receipt(
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests"
     try:
         response = cast(ReceiptInfoResponse, client.post(endpoint, None))
-        return receipt_result(response, payment_id)
+        return _receipt_result(response, payment_id)
     except SantanderRequestError as e:
         if e.status_code == 400 and handle_already_created:
             """if a receipt was already requested the Santander API 
@@ -131,7 +131,7 @@ def get_receipt(
         raise SantanderValueError("payment_id and receipt_request are required")
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests/{receipt_request_id}"
     response = cast(ReceiptInfoResponse, client.get(endpoint))
-    return receipt_result(response, payment_id)
+    return _receipt_result(response, payment_id)
 
 
 def receipt_creation_history(
@@ -158,7 +158,7 @@ def _payment_list_request(
 def _handle_already_created(
     client: SantanderApiClient, payment_id: str, error: SantanderRequestError
 ) -> ReceiptInfoResult:
-    """Retrieve the request from history to renew the file.
+    """This retrieve the request from history to renew the file.
     After retrieving from history, we need to refresh the status to generate a new one.
     If there is an error, we need to create a new request after getting the receipt.
     This happens when a receipt was requested a long time ago or the previous
@@ -179,10 +179,12 @@ def _handle_already_created(
     sleep(0.5)
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests"
     response = cast(ReceiptInfoResponse, client.post(endpoint, None))
-    return receipt_result(response, payment_id)
+    return _receipt_result(response, payment_id)
 
 
-def receipt_result(response: ReceiptInfoResponse, payment_id: str) -> ReceiptInfoResult:
+def _receipt_result(
+    response: ReceiptInfoResponse, payment_id: str
+) -> ReceiptInfoResult:
     """Just simplify the most important fields and embed the full response."""
     return ReceiptInfoResult(
         payment_id=payment_id,

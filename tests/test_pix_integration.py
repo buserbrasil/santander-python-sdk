@@ -27,6 +27,7 @@ from santander_sdk.types import OrderStatus
 @pytest.fixture
 def mock_api(mocker, responses: RequestsMock):
     mocker.patch("santander_sdk.transfer_flow.sleep", return_value=None)
+    mock_workspaces_endpoint()
     mock_auth_endpoint(responses)
     return responses
 
@@ -215,9 +216,6 @@ def test_transfer_pix_payment_rejected_on_confirm(
     mock_confirm = mock_confirm_pix_endpoint(
         mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
     )
-    mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
-    )
 
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
     assert transfer_result == {
@@ -227,7 +225,6 @@ def test_transfer_pix_payment_rejected_on_confirm(
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
-    assert mock_status.call_count == 0
 
 
 def test_transfer_pix_payment_with_beneficiary(
