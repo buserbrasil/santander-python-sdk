@@ -1,6 +1,9 @@
+import json
 import pytest
-import requests_mock
 from decimal import Decimal
+
+from responses import RequestsMock
+import responses
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.transfer_flow import (
     MAX_UPDATE_STATUS_AFTER_CONFIRM,
@@ -9,25 +12,23 @@ from santander_sdk.transfer_flow import (
 from santander_sdk.pix import transfer_pix
 from mock.santander_mocker import (
     PIX_ENDPOINT_WITH_WORKSPACE,
+    mock_auth_endpoint,
+    mock_workspaces_endpoint,
     santander_beneciary_john,
     beneciary_john_dict_json,
     get_dict_payment_pix_response,
     mock_confirm_pix_endpoint,
     mock_create_pix_endpoint,
-    mock_get_workspaces_endpoint,
     mock_pix_status_endpoint,
-    mock_token_endpoint,
 )
 from santander_sdk.types import OrderStatus
 
 
 @pytest.fixture
-def mock_api(mocker):
+def mock_api(mocker, responses: RequestsMock):
     mocker.patch("santander_sdk.transfer_flow.sleep", return_value=None)
-    with requests_mock.Mocker() as m:
-        mock_get_workspaces_endpoint(m)
-        mock_token_endpoint(m)
-        yield m
+    mock_auth_endpoint(responses)
+    return responses
 
 
 def test_transfer_pix_payment_success(mock_api, client_instance):
@@ -85,7 +86,9 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
     assert mock_status.call_count == 1
-    assert mock_create.request_history[0].json() == {
+    request_body = mock_create.calls[0].request.body
+    assert request_body is not None
+    assert json.loads(request_body) == {
         "tags": ["teste"],
         "paymentValue": "100.00",
         "remittanceInformation": description,
@@ -303,32 +306,21 @@ def test_transfer_pix_payment_lazy_status_update(
     mock_confirm = mock_confirm_pix_endpoint(
         mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
     )
-    mock_status = mock_api.get(
-        f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
-        [
-            {
-                "json": get_dict_payment_pix_response(
-                    pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
-                )
-            },
-            {
-                "json": get_dict_payment_pix_response(
-                    pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
-                )
-            },
-            {
-                "json": get_dict_payment_pix_response(
-                    pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
-                )
-            },
-            {
-                "json": get_dict_payment_pix_response(
-                    pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
-                )
-            },
-        ],
-    )
 
+    mock_status_pending = mock_api.add(
+        responses.GET,
+        f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
+        json=get_dict_payment_pix_response(
+            pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
+        ),
+    )
+    mock_status_ready = mock_api.add(
+        responses.GET,
+        f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
+        json=get_dict_payment_pix_response(
+            pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
+        ),
+    )
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
     assert transfer_result == {
         "success": True,
@@ -366,4 +358,5 @@ def test_transfer_pix_payment_lazy_status_update(
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
-    assert mock_status.call_count == 3
+    assert mock_status_pending.call_count == 1
+    assert mock_status_ready.call_count == 1
