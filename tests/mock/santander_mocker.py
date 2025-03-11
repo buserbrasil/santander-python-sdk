@@ -1,7 +1,6 @@
 from decimal import Decimal
 from typing import cast
 from urllib.parse import urljoin
-from responses import matchers
 
 from responses import RequestsMock
 import responses
@@ -340,7 +339,7 @@ def mock_workspaces_endpoint():
         rsps.add(
             responses.GET,
             urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT),
-            json=workspace_response_mock
+            json=workspace_response_mock,
         )
         return rsps
 
