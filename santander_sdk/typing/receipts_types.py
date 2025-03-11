@@ -2,6 +2,8 @@
 
 from typing import List, Literal, Optional, TypedDict
 
+from santander_sdk.types import SantanderAPIErrorsFields
+
 ALREADY_REQUESTED_RECEIPT = "006"
 
 PaymentCategoryData = Optional[
@@ -125,14 +127,6 @@ class PaginableResponseLinks(TypedDict):
     _next: Optional[PaginableResponseLinkHref]
 
 
-class PaymentReceiptErrorDetails(TypedDict):
-    """Payment Receipt Error Details"""
-
-    _code: str
-    _field: str
-    _message: str
-
-
 class PaymentReceiptErrorResponse(TypedDict):
     """Base response error payment receipts
     Example:
@@ -147,7 +141,7 @@ class PaymentReceiptErrorResponse(TypedDict):
     }
     """
 
-    error: List[PaymentReceiptErrorDetails]
+    error: List[SantanderAPIErrorsFields]
 
 
 class ListPaymentsResponse(TypedDict):
