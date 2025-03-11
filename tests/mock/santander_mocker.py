@@ -1,10 +1,10 @@
 from decimal import Decimal
 from typing import cast
 from urllib.parse import urljoin
+from responses import matchers
 
-from requests_mock import Mocker
-from requests_mock.adapter import _Matcher as Matcher
 from responses import RequestsMock
+import responses
 
 from santander_sdk.api_client.client import TOKEN_ENDPOINT
 from santander_sdk.api_client.workspaces import WORKSPACES_ENDPOINT
@@ -134,55 +134,47 @@ dict_token_response = {
 
 
 def mock_create_pix_endpoint(
-    mocker: Mocker,
+    responses: RequestsMock,
     pix_id: str,
     value: Decimal,
     status: str,
     pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
-) -> Matcher:
+):
     post_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
-    return mocker.post(PIX_ENDPOINT_WITH_WORKSPACE, json=post_response)
+    return responses.post(PIX_ENDPOINT_WITH_WORKSPACE, json=post_response)
 
 
 def mock_confirm_pix_endpoint(
-    mocker: Mocker,
+    responses: RequestsMock,
     pix_id: str,
     value: Decimal,
     status: str,
     pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
-) -> Matcher:
+):
     patch_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
-    return mocker.patch(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=patch_response)
+    return responses.patch(
+        f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=patch_response
+    )
 
 
 def mock_pix_status_endpoint(
-    mocker: Mocker,
+    responses: RequestsMock,
     pix_id: str,
     value: Decimal,
     status: str,
     pix_info: str | SantanderBeneficiary,
     key_type: str = "CPF",
-) -> Matcher:
+):
     get_response = get_dict_payment_pix_response(
         pix_id, value, status, pix_info, key_type
     )
-    return mocker.get(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=get_response)
-
-
-def mock_get_workspaces_endpoint(mocker: Mocker) -> Matcher:
-    return mocker.get(
-        urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT), json=workspace_response_mock
-    )
-
-
-def mock_token_endpoint(mocker: Mocker) -> Matcher:
-    return mocker.post(urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=dict_token_response)
+    return responses.get(f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}", json=get_response)
 
 
 beneciary_john_dict_json = {
@@ -343,17 +335,17 @@ def receipt_response_dict(
     }
 
 
-def mock_workspaces_endpoint(responses: RequestsMock) -> RequestsMock:
-    responses.add(
-        responses.GET,
-        urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT),
-        json=workspace_response_mock,
-    )
-    return responses
+def mock_workspaces_endpoint():
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as rsps:
+        rsps.add(
+            responses.GET,
+            urljoin(SANTANDER_URL, WORKSPACES_ENDPOINT),
+            json=workspace_response_mock
+        )
+        return rsps
 
 
-def mock_auth_endpoint(responses: RequestsMock) -> RequestsMock:
-    responses.add(
+def mock_auth_endpoint(responses: RequestsMock):
+    return responses.add(
         responses.POST, urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=dict_token_response
     )
-    return responses
