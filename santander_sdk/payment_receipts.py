@@ -58,7 +58,7 @@ from santander_sdk.typing.receipts_types import (
     ListPaymentsResponse,
     ReceiptInfoResult,
     ReceiptStatus,
-    RecepeitCreationHistoryResponse,
+    ReceiptCreationHistoryResponse,
 )
 
 RECEIPTS_ENDPOINT = "/consult_payment_receipts/v1/payment_receipts"
@@ -136,11 +136,11 @@ def get_receipt(
 
 def receipt_creation_history(
     client: SantanderApiClient, payment_id: str
-) -> RecepeitCreationHistoryResponse:
+) -> ReceiptCreationHistoryResponse:
     """List the history of receipt creation requests."""
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests"
     response = client.get(endpoint)
-    return cast(RecepeitCreationHistoryResponse, response)
+    return cast(ReceiptCreationHistoryResponse, response)
 
 
 def _payment_list_request(

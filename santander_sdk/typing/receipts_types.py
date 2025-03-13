@@ -221,7 +221,7 @@ class ReceiptInfoResponse(TypedDict):
     file: ReceiptFileResponse
 
 
-class RecepeitCreationHistoryResponse(TypedDict):
+class ReceiptCreationHistoryResponse(TypedDict):
     """Example:
         {
         "paymentReceiptsFileRequests": [
