@@ -9,7 +9,7 @@ An **unofficial** Python SDK for Santander's API that simplifies integration wit
 - ✨ **Authentication**: Automatic token management
 - 💰 **Account Information**: Retrieve account and workspace details
 - 💸 **PIX Transfers**: Easy PIX payment processing
-- 📑 **Receipts**: Query and retrive receipts of any transaction
+- 📑 **Receipts**: Query and retrieve receipts of any transaction
 - 📊 **Transaction History**: Query and track transactions history
 - 🔒 **Secure**: Built-in security best practices
 
@@ -37,7 +37,7 @@ client = SantanderApiClient(
 )
 
 # Make a simple PIX transfer
-from santander_sdk.pix import transfer_pix
+from santander_sdk import transfer_pix
 
 transfer = transfer_pix(
     client,
@@ -47,7 +47,7 @@ transfer = transfer_pix(
 )
 
 # Check transfer status
-from santander_sdk.pix import get_transfer
+from santander_sdk import get_transfer
 
 status = get_transfer(transfer["id"])
 print(f"Transfer status: {status['status']}")
@@ -80,11 +80,11 @@ transfer = transfer_pix(
 )
 ```
 
-### List Payments to get usefull information
+### List Payments to get useful information
 You can get the list of payments made, filtering by payment type, recipient, etc. See `ListPaymentParams` for all possible filters. One use case, for example, is when you want to generate a receipt but don't have the payment ID.
 
 ```python
-from santander_sdk.payment_receipts import payment_list, ListPaymentParams
+from santander_sdk import payment_list, ListPaymentParams
 
 payments = payment_list(client, ListPaymentParams(
     start_date="2025-01-01",
@@ -118,7 +118,7 @@ print('Receipt URL Location:', receipt_info["location"])
 print('Full Information:', receipt_info["data"])
 ```
 
-## Advance usage of Receipts 
+## Advanced usage of Receipts 
 
 ### Iterate Over Payments List
 
@@ -205,6 +205,12 @@ pytest tests/
 - 📫 Open an issue for bugs or feature requests
 - 💬 Join our [Discord community](link-to-discord) for discussions
 - 📖 Check our [FAQ](link-to-faq) for common questions
+
+## Santander oficial documentation
+
+ - [User guide introduction](https://developer.santander.com.br/api/user-guide/user-guide-introduction)
+ - [Pix, Boleto, transfer flow](https://developer.santander.com.br/api/documentacao/transferencias-pix-visao-geral#/)
+ - [Receipts](https://developer.santander.com.br/api/documentacao/comprovantes-visao-geral#/)
 
 ## License
 
