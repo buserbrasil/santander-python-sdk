@@ -9,7 +9,8 @@ An **unofficial** Python SDK for Santander's API that simplifies integration wit
 - ✨ **Authentication**: Automatic token management
 - 💰 **Account Information**: Retrieve account and workspace details
 - 💸 **PIX Transfers**: Easy PIX payment processing
-- 📊 **Transaction History**: Query and track transactions
+- 📑 **Receipts**: Query and retrive receipts of any transaction
+- 📊 **Transaction History**: Query and track transactions history
 - 🔒 **Secure**: Built-in security best practices
 
 ## Installation
@@ -83,9 +84,9 @@ transfer = transfer_pix(
 You can get the list of payments made, filtering by payment type, recipient, etc. See `ListPaymentParams` for all possible filters. One use case, for example, is when you want to generate a receipt but don't have the payment ID.
 
 ```python
-from santander_sdk import payment_receipts
+from santander_sdk.payment_receipts import payment_list
 
-payments = payment_receipts.payment_list(client, ListPaymentParams(
+payments = payment_list(client, ListPaymentParams(
     start_date="2025-01-01",
     end_date="2025-01-02",
 ))
@@ -96,7 +97,9 @@ payment_id = payments[0]["payment"]["paymentId"]
 
 Create a receipt request using the payment ID.
 ```python
-create_response = payment_receipts.create_receipt(client, "MY-PAYMENT-ID")
+from santander_sdk.payment_receipts import create_receipt
+
+create_response = create_receipt(client, "MY-PAYMENT-ID")
 ```
 The receipt creation is asynchronous on Santander. You will likely receive a response indicating that your receipt has been requested. Since the process is asynchronous, you should check back later to retrieve it.
 
@@ -106,7 +109,9 @@ The receipt creation is asynchronous on Santander. You will likely receive a res
 To obtain the receipt information, you need the payment id and the `receipt_request_id` (which is generated when you made the request on `create_receipt`).
 
 ```python
-receipt_info = payment_receipts.get_receipt(client, payment_id, receipt_request_id)
+from santander_sdk.payment_receipts import get_receipt
+
+receipt_info = get_receipt(client, payment_id, receipt_request_id)
 
 print('Receipt Status:', receipt_info["status"])
 print('Receipt URL Location:', receipt_info["location"])
@@ -120,8 +125,10 @@ print('Full Information:', receipt_info["data"])
 If the payments list is too large and you want to iterate over them, use `payment_list_iter_by_pages`.
 
 ```python
+from santander_sdk.payment_receipts import payment_list_iter_by_pages
+
 # Filtering by one month with a return of 2 payments per page, the max per page is 1000
-payments_pages = payment_receipts.payment_list_iter_by_pages(client, ListPaymentParams(
+payments_pages = payment_list_iter_by_pages(client, ListPaymentParams(
     start_date="2025-02-01", 
     end_date="2025-02-28", 
     _limit="2")
@@ -136,9 +143,9 @@ for page in payments_pages:
 To obtain the history of receipt creation:
 
 ```python
-from santander_sdk import payment_receipts
+from santander_sdk.payment_receipts import receipt_creation_history
 
-history = payment_receipts.receipt_creation_history(client, payment_id)
+history = receipt_creation_history(client, payment_id)
 print('Receipt Creation History:', history)
 ```
 This function is used internally to handle cases where a receipt request has expired or encountered an error. However, you can use it to view all receipt creation requests that have been made.
