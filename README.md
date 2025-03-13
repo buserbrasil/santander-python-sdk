@@ -84,7 +84,7 @@ transfer = transfer_pix(
 You can get the list of payments made, filtering by payment type, recipient, etc. See `ListPaymentParams` for all possible filters. One use case, for example, is when you want to generate a receipt but don't have the payment ID.
 
 ```python
-from santander_sdk.payment_receipts import payment_list
+from santander_sdk.payment_receipts import payment_list, ListPaymentParams
 
 payments = payment_list(client, ListPaymentParams(
     start_date="2025-01-01",
@@ -97,7 +97,7 @@ payment_id = payments[0]["payment"]["paymentId"]
 
 Create a receipt request using the payment ID.
 ```python
-from santander_sdk.payment_receipts import create_receipt
+from santander_sdk import create_receipt
 
 create_response = create_receipt(client, "MY-PAYMENT-ID")
 ```
@@ -109,7 +109,7 @@ The receipt creation is asynchronous on Santander. You will likely receive a res
 To obtain the receipt information, you need the payment id and the `receipt_request_id` (which is generated when you made the request on `create_receipt`).
 
 ```python
-from santander_sdk.payment_receipts import get_receipt
+from santander_sdk import get_receipt
 
 receipt_info = get_receipt(client, payment_id, receipt_request_id)
 
@@ -125,7 +125,7 @@ print('Full Information:', receipt_info["data"])
 If the payments list is too large and you want to iterate over them, use `payment_list_iter_by_pages`.
 
 ```python
-from santander_sdk.payment_receipts import payment_list_iter_by_pages
+from santander_sdk import payment_list_iter_by_pages, ListPaymentParams
 
 # Filtering by one month with a return of 2 payments per page, the max per page is 1000
 payments_pages = payment_list_iter_by_pages(client, ListPaymentParams(
