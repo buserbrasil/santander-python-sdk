@@ -87,10 +87,10 @@ def payment_list_iter_by_pages(
     yield response
     while "_next" in response.get("links", {}):
         try:
-            next = response["links"]["_next"]
-            if next is None:
+            next_link = response["links"].get("_next")
+            if not next_link or not next_link.get("href"):
                 break
-            next_offset = next["href"].split("_offset=")[1].split("&")[0]
+            next_offset = next_link["href"].split("_offset=")[1].split("&")[0]
             params["_offset"] = next_offset
             response = _payment_list_request(client, params)
             yield response

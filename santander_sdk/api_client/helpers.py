@@ -1,9 +1,11 @@
 from decimal import ROUND_DOWN, Decimal
 import logging
 from itertools import cycle
+from time import sleep, time
 from typing import Literal
 import re
 import requests
+import pathlib
 
 from santander_sdk.api_client.exceptions import (
     SantanderRequestError,
@@ -148,3 +150,34 @@ def document_type(document_number: str) -> Literal["CPF", "CNPJ"]:
     if len(document_number) == 14:
         return "CNPJ"
     raise SantanderValueError('Unknown document type "{document_number}"')
+
+
+def get_content_from_url(url: str) -> bytes:
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    response.raise_for_status()
+    return response.content
+
+
+def save_bytes_to_file(content: bytes, file_path: str):
+    path = pathlib.Path(file_path)
+    path.write_bytes(content)
+    return str(path)
+
+
+def download_file(url: str, file_path: str):
+    content = get_content_from_url(url)
+    saved_path = save_bytes_to_file(content, file_path)
+    return saved_path
+
+
+def polling_until_condition(
+    func, conditional_func, timeout=60, interval=1, *args, **kwargs
+):
+    """Polling until a condition is met."""
+    end_time = time() + timeout
+    while time() <= end_time:
+        result = func(*args, **kwargs)
+        if conditional_func(result):
+            return result
+        sleep(interval)
+    raise TimeoutError("Timeout polling until condition is met")

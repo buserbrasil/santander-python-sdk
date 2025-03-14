@@ -1,4 +1,4 @@
-import unittest
+import pytest
 from unittest.mock import MagicMock, patch
 from santander_sdk.api_client.workspaces import (
     WORKSPACES_ENDPOINT,
@@ -12,39 +12,43 @@ from mock.santander_mocker import (
 )
 
 
-class UnitTestWorkspaces(unittest.TestCase):
-    def setUp(self):
-        self.mock_client = MagicMock(spec=SantanderApiClient)
+@pytest.fixture
+def mock_client():
+    return MagicMock(spec=SantanderApiClient)
 
-    def test_get_workspaces(self):
-        mock_response = workspace_response_mock
-        self.mock_client.get.return_value = mock_response
 
-        workspaces = get_workspaces(self.mock_client)
-        self.mock_client.get.assert_called_once_with(WORKSPACES_ENDPOINT)
-        self.assertEqual(workspaces, mock_response["_content"])
+def test_get_workspaces(mock_client):
+    mock_response = workspace_response_mock
+    mock_client.get.return_value = mock_response
 
-    def test_get_workspaces_no_content(self):
-        mock_response = {}
-        self.mock_client.get.return_value = mock_response
+    workspaces = get_workspaces(mock_client)
+    mock_client.get.assert_called_once_with(WORKSPACES_ENDPOINT)
+    assert workspaces == mock_response["_content"]
 
-        workspaces = get_workspaces(self.mock_client)
-        self.mock_client.get.assert_called_once_with(WORKSPACES_ENDPOINT)
-        self.assertIsNone(workspaces)
 
-    def test_get_first_workspace_id_of_type(self):
-        workspace_payment_and_active = workspace_response_mock["_content"][2]
-        with patch(
-            "santander_sdk.api_client.workspaces.get_workspaces",
-            return_value=workspace_response_mock["_content"],
-        ):
-            workspace_id = get_first_workspace_id_of_type(self.mock_client, "PAYMENTS")
-            self.assertEqual(workspace_id, workspace_payment_and_active["id"])
+def test_get_workspaces_no_content(mock_client):
+    mock_response = {}
+    mock_client.get.return_value = mock_response
 
-    def test_get_first_workspace_id_of_type_no_match(self):
-        with patch(
-            "santander_sdk.api_client.workspaces.get_workspaces",
-            return_value=no_payments_workspaces_mock["_content"],
-        ):
-            workspace_id = get_first_workspace_id_of_type(self.mock_client, "PAYMENTS")
-            self.assertIsNone(workspace_id)
+    workspaces = get_workspaces(mock_client)
+    mock_client.get.assert_called_once_with(WORKSPACES_ENDPOINT)
+    assert workspaces is None
+
+
+def test_get_first_workspace_id_of_type(mock_client):
+    workspace_payment_and_active = workspace_response_mock["_content"][2]
+    with patch(
+        "santander_sdk.api_client.workspaces.get_workspaces",
+        return_value=workspace_response_mock["_content"],
+    ):
+        workspace_id = get_first_workspace_id_of_type(mock_client, "PAYMENTS")
+        assert workspace_id == workspace_payment_and_active["id"]
+
+
+def test_get_first_workspace_id_of_type_no_match(mock_client):
+    with patch(
+        "santander_sdk.api_client.workspaces.get_workspaces",
+        return_value=no_payments_workspaces_mock["_content"],
+    ):
+        workspace_id = get_first_workspace_id_of_type(mock_client, "PAYMENTS")
+        assert workspace_id is None
