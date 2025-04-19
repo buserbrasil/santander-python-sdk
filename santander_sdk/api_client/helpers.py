@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from decimal import ROUND_DOWN, Decimal
 import logging
 from itertools import cycle
@@ -22,7 +23,10 @@ DictCodeTypes = Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"]
 
 def truncate_value(value):
     """Trunca o valor para duas casas decimais"""
-    return str(Decimal(value).quantize(Decimal("0.00"), rounding=ROUND_DOWN))
+    try:
+        return str(Decimal(value).quantize(Decimal("0.00"), rounding=ROUND_DOWN))
+    except ValueError as e:
+        raise ValueError(f"The value '{value}' is invalid for payments: {str(e)}")
 
 
 def get_pix_key_type(chave: str) -> DictCodeTypes:
@@ -181,3 +185,18 @@ def polling_until_condition(
             return result
         sleep(interval)
     raise TimeoutError("Timeout polling until condition is met")
+
+
+def today() -> date:
+    return datetime.now().date()
+
+
+def to_iso_date_string(value: str | date) -> str:
+    if isinstance(value, date):
+        return value.isoformat()
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        raise ValueError(
+            f"Invalid date format: {value}. Expected Iso Format YYYY-MM-DD."
+        )

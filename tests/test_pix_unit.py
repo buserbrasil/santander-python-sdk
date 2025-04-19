@@ -138,7 +138,7 @@ def test_transfer_pix_payment_no_pix_id(api_client, mock_sdk):
     mock_sdk.create.return_value["id"] = None
     result = transfer_pix(api_client, "12345678909", D("100.00"), "Pagamento Teste")
     assert result["success"] is False
-    assert "Payment ID was not returned on creation" in result["error"]
+    assert "Response without id" in result["error"]
 
 
 def test_transfer_pix_payment_rejected(api_client, mock_sdk):

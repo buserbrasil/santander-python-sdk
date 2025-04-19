@@ -4,7 +4,6 @@ from typing import cast
 
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.exceptions import (
-    SantanderClientError,
     SantanderValueError,
 )
 
@@ -30,32 +29,33 @@ def transfer_pix(
     description: str,
     tags: list[str] = [],
 ) -> TransferPixResult:
+    id = ""
     try:
         if value is None or value <= 0:
             raise SantanderValueError(f"Invalid value for PIX transfer: {value}")
 
-        transfer_flow = SantanderPaymentFlow(client, PIX_ENDPOINT, logger)
+        flow = SantanderPaymentFlow(client, PIX_ENDPOINT, logger)
+        data = _data_dict(pix_key, value, description, tags)
+        create_pix_response = flow.create_payment(data)
+        id = create_pix_response["id"]
+        if not id:
+            raise SantanderValueError(
+                f"Response without id. Response: {create_pix_response}"
+            )
 
-        create_pix_dict = _generate_create_pix_dict(pix_key, value, description, tags)
-        create_pix_response = transfer_flow.create_payment(create_pix_dict)
-        if not create_pix_response.get("id"):
-            raise SantanderClientError("Payment ID was not returned on creation")
-        if create_pix_response.get("status") is None:
-            raise SantanderClientError("Payment status was not returned on creation")
+        flow.ensure_ready_to_pay(create_pix_response)
 
-        transfer_flow.ensure_ready_to_pay(create_pix_response)
-        payment_data = {
-            "status": "AUTHORIZED",
-            "paymentValue": truncate_value(value),
-        }
-        confirm_response = transfer_flow.confirm_payment(
-            payment_data, create_pix_response.get("id")
+        confirm_response = flow.confirm_payment(
+            {
+                "status": "AUTHORIZED",
+                "paymentValue": truncate_value(value),
+            },
+            id,
         )
-        return {"success": True, "data": confirm_response, "error": ""}
+        return {"success": True, "id": id, "data": confirm_response, "error": ""}
     except Exception as e:
-        error_message = str(e)
-        logger.error(error_message)
-        return {"success": False, "error": error_message, "data": None}
+        logger.error(str(e))
+        return {"success": False, "id": id, "data": None, "error": str(e)}
 
 
 def get_transfer(
@@ -67,7 +67,7 @@ def get_transfer(
     return cast(SantanderPixResponse, response)
 
 
-def _generate_create_pix_dict(
+def _data_dict(
     pix_key: SantanderBeneficiary | str,
     value: D,
     description: str,
@@ -90,6 +90,6 @@ def _generate_create_pix_dict(
         if beneficiary.get("bankCode") and beneficiary.get("ispb"):
             beneficiary.pop("ispb")
             data.update({"beneficiary": beneficiary})
-    else:
-        raise SantanderValueError("PIX key or Beneficiary not provided")
-    return data
+        return data
+
+    raise SantanderValueError("PIX key or Beneficiary not provided")

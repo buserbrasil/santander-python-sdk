@@ -81,6 +81,7 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "success": True,
+        "id": "12345",
         "error": "",
     }
 
@@ -117,6 +118,7 @@ def test_transfer_pix_payment_timeout_create(
     assert transfer_result == {
         "success": False,
         "error": "Status update timeout after several attempts: Santander - Status update attempt limit reached",
+        "id": "12345",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -175,6 +177,7 @@ def test_transfer_pix_payment_timeout_before_authorize(
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "error": "",
+        "id": "QAS47FASF5646",
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -198,6 +201,7 @@ def test_transfer_pix_payment_rejected_on_create(
         "success": False,
         "error": "Payment rejection: Santander - Payment rejected by the bank at step CREATE - Reason not returned by Santander",
         "data": None,
+        "id": "",
     }
     assert mock_create.call_count == 1
 
@@ -222,6 +226,7 @@ def test_transfer_pix_payment_rejected_on_confirm(
         "success": False,
         "error": "Payment rejection: Santander - Payment rejected by the bank at step CONFIRM - Reason not returned by Santander",
         "data": None,
+        "id": "5A4SD6Q5W6Q68A",
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -283,6 +288,7 @@ def test_transfer_pix_payment_with_beneficiary(
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "error": "",
+        "id": "ASF5Q7Q879WQ",
     }
     assert mock_create.call_count == 1
     assert mock_status.call_count == 1
@@ -352,6 +358,7 @@ def test_transfer_pix_payment_lazy_status_update(
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "error": "",
+        "id": "12345",
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1

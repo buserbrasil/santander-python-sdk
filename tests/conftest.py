@@ -1,7 +1,7 @@
 import pytest
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
-from tests.mock.santander_mocker import SANTANDER_URL, TEST_WORKSPACE_ID
+from tests.mock.santander_mocker import SANTANDER_URL, TEST_WORKSPACE_ID, mock_auth_endpoint
 
 
 @pytest.fixture
@@ -15,3 +15,7 @@ def client_instance():
             workspace_id=TEST_WORKSPACE_ID,
         )
     )
+
+@pytest.fixture
+def mock_auth(responses):
+    mock_auth_endpoint(responses)

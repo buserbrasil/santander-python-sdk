@@ -1,3 +1,4 @@
+from datetime import date
 import pytest
 from unittest.mock import MagicMock, patch
 import responses
@@ -8,6 +9,7 @@ from santander_sdk.api_client.helpers import (
     polling_until_condition,
     retry_one_time_on_request_exception,
     save_bytes_to_file,
+    to_iso_date_string,
     truncate_value,
     get_pix_key_type,
 )
@@ -125,3 +127,16 @@ def test_polling_until_condition_timeout(mock_sleep_time):
 
     assert func.call_count == 4
     mock_sleep.assert_called_with(1)
+
+
+def test_to_iso_date_string():
+    assert to_iso_date_string(date(2025, 3, 15)) == "2025-03-15"
+    assert to_iso_date_string("2025-03-15") == "2025-03-15"
+
+    with pytest.raises(ValueError, match="Invalid date format: 15-03-2025."):
+        to_iso_date_string("15-03-2025")
+
+    with pytest.raises(
+        ValueError, match="invalid-date. Expected Iso Format YYYY-MM-DD."
+    ):
+        to_iso_date_string("invalid-date")
