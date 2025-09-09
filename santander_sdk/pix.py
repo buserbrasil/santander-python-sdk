@@ -89,7 +89,7 @@ def _generate_create_pix_dict(
             raise SantanderValueError("Either 'bankCode' or 'ispb' must be provided")
         if beneficiary.get("bankCode") and beneficiary.get("ispb"):
             beneficiary.pop("ispb")
-            data.update({"beneficiary": beneficiary})
+        data.update({"beneficiary": beneficiary})
     else:
         raise SantanderValueError("PIX key or Beneficiary not provided")
     return data
