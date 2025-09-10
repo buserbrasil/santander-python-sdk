@@ -91,23 +91,26 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
     create_payment_request = mock_create.calls[0].request.body
     assert create_payment_request is not None
     assert json.loads(create_payment_request) == {
-       'dictCode': '12345678909',
-       'dictCodeType': 'CPF',
-       'paymentValue': '100.00',
-       'remittanceInformation': 'Pagamento Teste',
-       'tags': [
-           'teste',
-       ],
+        "dictCode": "12345678909",
+        "dictCodeType": "CPF",
+        "paymentValue": "100.00",
+        "remittanceInformation": "Pagamento Teste",
+        "tags": [
+            "teste",
+        ],
     }
-    
+
     confirm_payment_request_body = mock_confirm.calls[0].request.body
     confirm_payment_request_url = mock_confirm.calls[0].request.url
     assert confirm_payment_request_body is not None
     assert json.loads(confirm_payment_request_body) == {
-       'paymentValue': '100.00',
-       'status': 'AUTHORIZED',
-   }
-    assert confirm_payment_request_url == f"https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/12345"
+        "paymentValue": "100.00",
+        "status": "AUTHORIZED",
+    }
+    assert (
+        confirm_payment_request_url
+        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/12345"
+    )
 
 
 def test_transfer_pix_payment_timeout_create(
@@ -263,24 +266,24 @@ def test_transfer_pix_payment_with_beneficiary(
     transfer_result = transfer_pix(
         client_instance, santander_beneciary_john, value, description
     )
-    
+
     transfer_request = mock_create.calls[0].request.body
     assert transfer_request is not None
     assert json.loads(transfer_request) == {
-       'beneficiary': {
-           'bankCode': '404',
-           'branch': '2424',
-           'documentNumber': '12345678909',
-           'documentType': 'CPF',
-           'name': 'John Doe',
-           'number': '123456789',
-           'type': 'CONTA_CORRENTE',
-       },
-       'paymentValue': '59.99',
-       'remittanceInformation': 'Pagamento Teste',
-       'tags': [],
+        "beneficiary": {
+            "bankCode": "404",
+            "branch": "2424",
+            "documentNumber": "12345678909",
+            "documentType": "CPF",
+            "name": "John Doe",
+            "number": "123456789",
+            "type": "CONTA_CORRENTE",
+        },
+        "paymentValue": "59.99",
+        "remittanceInformation": "Pagamento Teste",
+        "tags": [],
     }
-    
+
     assert transfer_result == {
         "success": True,
         "data": {
@@ -321,10 +324,13 @@ def test_transfer_pix_payment_with_beneficiary(
     confirm_payment_request_url = mock_confirm.calls[0].request.url
     assert confirm_payment_request_body is not None
     assert json.loads(confirm_payment_request_body) == {
-       'paymentValue': '59.99',
-       'status': 'AUTHORIZED',
-   }
-    assert confirm_payment_request_url == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/ASF5Q7Q879WQ"
+        "paymentValue": "59.99",
+        "status": "AUTHORIZED",
+    }
+    assert (
+        confirm_payment_request_url
+        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/ASF5Q7Q879WQ"
+    )
 
 
 def test_transfer_pix_payment_lazy_status_update(
