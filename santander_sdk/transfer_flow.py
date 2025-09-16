@@ -17,7 +17,6 @@ from santander_sdk.types import (
     ConfirmOrderStatus,
     CreateOrderStatus,
     OrderStatus,
-    OrderStatusType,
     SantanderPixResponse,
 )
 
@@ -38,11 +37,13 @@ class SantanderPaymentFlow:
         self.client = client
         self.logger = logger or logging.getLogger(__name__)
         self.endpoint = endpoint
+        self.request_id = None
 
     def create_payment(self, data: dict) -> SantanderPixResponse:
         response = cast(
             SantanderPixResponse, self.client.post(self.endpoint, data=data)
         )
+        self.request_id = response.get("id")
         self._check_for_rejected_error(response)
         self.logger.info("Payment created: ", response.get("id"))
         return response
@@ -69,7 +70,7 @@ class SantanderPaymentFlow:
         if not confirm_response.get("status") == ConfirmOrderStatus.PAYED:
             try:
                 confirm_response = self._resolve_lazy_status_payed(
-                    payment_id, confirm_response.get("status")
+                    payment_id, confirm_response.get("status", "")
                 )
             except SantanderStatusTimeoutError as e:
                 self.logger.info("Timeout occurred while updating status:", str(e))
@@ -105,9 +106,7 @@ class SantanderPaymentFlow:
             f"Payment rejected by the bank at step {self.current_step} - {reject_reason}"
         )
 
-    def _resolve_lazy_status_payed(
-        self, payment_id: str, current_status: OrderStatusType
-    ) -> None:
+    def _resolve_lazy_status_payed(self, payment_id: str, current_status: str):
         if not current_status == ConfirmOrderStatus.PENDING_CONFIRMATION:
             raise SantanderClientError(
                 f"Unexpected status after confirmation: {current_status}"
@@ -122,6 +121,8 @@ class SantanderPaymentFlow:
     def _payment_status_polling(
         self, payment_id: str, until_status: List[str], max_update_attemps: int
     ) -> SantanderPixResponse:
+        response = None
+
         for attempt in range(1, max_update_attemps + 1):
             response = self._request_payment_status(payment_id)
             self.logger.info(
@@ -135,4 +136,6 @@ class SantanderPaymentFlow:
                 )
             sleep(UPDATE_STATUS_INTERVAL_TIME)
 
+        if response is None:
+            raise SantanderClientError("No response received during polling")
         return response

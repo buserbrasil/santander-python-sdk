@@ -11,10 +11,7 @@ from santander_sdk.api_client.helpers import (
     truncate_value,
     get_pix_key_type,
 )
-from santander_sdk.api_client.exceptions import (
-    SantanderRequestError,
-    SantanderValueError,
-)
+from santander_sdk.api_client.exceptions import SantanderRequestError
 
 
 def test_truncate_value():
@@ -34,10 +31,10 @@ def test_get_pix_key_type():
 
 
 def test_get_pix_key_type_invalid():
-    with pytest.raises(SantanderValueError):
+    with pytest.raises(ValueError):
         get_pix_key_type("234567890abcdef1234567890abcdef")
 
-    with pytest.raises(SantanderValueError):
+    with pytest.raises(ValueError):
         get_pix_key_type("55 34 12345678")
 
 

@@ -1,4 +1,5 @@
 import json
+import uuid
 import pytest
 from decimal import Decimal
 
@@ -33,7 +34,7 @@ def mock_api(mocker, responses: RequestsMock):
 
 
 def test_transfer_pix_payment_success(mock_api, client_instance):
-    pix_id = "12345"
+    pix_id = "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e"
     value = Decimal("100.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
@@ -59,7 +60,7 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
             "deductedValue": "0.00",
             "dictCode": "12345678909",
             "dictCodeType": "CPF",
-            "id": "12345",
+            "id": "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e",
             "nominalValue": "100.00",
             "obs": "payment mockado",
             "payer": {
@@ -69,7 +70,7 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
             },
             "paymentValue": "100.00",
             "remittanceInformation": "informação da transferência",
-            "status": OrderStatus.PAYED,
+            "status": "PAYED",
             "tags": [],
             "totalValue": "100.00",
             "transaction": {
@@ -81,6 +82,7 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "success": True,
+        "request_id": "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e",
         "error": "",
     }
 
@@ -109,7 +111,7 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
     }
     assert (
         confirm_payment_request_url
-        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/12345"
+        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e"
     )
 
 
@@ -132,6 +134,7 @@ def test_transfer_pix_payment_timeout_create(
     assert transfer_result == {
         "success": False,
         "error": "Status update timeout after several attempts: Santander - Status update attempt limit reached",
+        "request_id": "12345",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -190,6 +193,7 @@ def test_transfer_pix_payment_timeout_before_authorize(
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
         "error": "",
+        "request_id": "QAS47FASF5646",
     }
     assert mock_create.call_count == 1
     assert mock_confirm.call_count == 1
@@ -212,6 +216,7 @@ def test_transfer_pix_payment_rejected_on_create(
     assert transfer_result == {
         "success": False,
         "error": "Payment rejection: Santander - Payment rejected by the bank at step CREATE - Reason not returned by Santander",
+        "request_id": "QASF4568E48Q",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -220,7 +225,7 @@ def test_transfer_pix_payment_rejected_on_create(
 def test_transfer_pix_payment_rejected_on_confirm(
     client_instance: SantanderApiClient, mock_api
 ):
-    pix_id = "5A4SD6Q5W6Q68A"
+    pix_id = "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e"
     value = Decimal("157.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
@@ -236,6 +241,7 @@ def test_transfer_pix_payment_rejected_on_confirm(
     assert transfer_result == {
         "success": False,
         "error": "Payment rejection: Santander - Payment rejected by the bank at step CONFIRM - Reason not returned by Santander",
+        "request_id": "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e",
         "data": None,
     }
     assert mock_create.call_count == 1
@@ -245,7 +251,7 @@ def test_transfer_pix_payment_rejected_on_confirm(
 def test_transfer_pix_payment_with_beneficiary(
     client_instance: SantanderApiClient, mock_api
 ):
-    pix_id = "ASF5Q7Q879WQ"
+    pix_id = "9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f"
     value = Decimal("59.99")
     description = "Pagamento Teste"
 
@@ -294,7 +300,7 @@ def test_transfer_pix_payment_with_beneficiary(
                 "number": "123456789",
             },
             "deductedValue": "0.00",
-            "id": "ASF5Q7Q879WQ",
+            "id": "9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f",
             "nominalValue": "59.99",
             "obs": "payment mockado",
             "payer": {
@@ -304,7 +310,7 @@ def test_transfer_pix_payment_with_beneficiary(
             },
             "paymentValue": "59.99",
             "remittanceInformation": "informação da transferência",
-            "status": OrderStatus.PAYED,
+            "status": "PAYED",
             "tags": [],
             "totalValue": "59.99",
             "transaction": {
@@ -315,6 +321,7 @@ def test_transfer_pix_payment_with_beneficiary(
             },
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
+        "request_id": "9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f",
         "error": "",
     }
     assert mock_create.call_count == 1
@@ -329,14 +336,14 @@ def test_transfer_pix_payment_with_beneficiary(
     }
     assert (
         confirm_payment_request_url
-        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/ASF5Q7Q879WQ"
+        == "https://trust-sandbox.api.santander.com.br/management_payments_partners/v1/workspaces/8e33d56c-204f-461e-aebe-08baaab6479e/pix_payments/9f8e7d6c-5b4a-4c3d-8e2f-1a0b9c8d7e6f"
     )
 
 
 def test_transfer_pix_payment_lazy_status_update(
     client_instance: SantanderApiClient, mock_api
 ):
-    pix_id = "12345"
+    pix_id = "c1a4f3e2-9b7d-4e5a-8c2e-3f1b2a4d5e6f"
     value = Decimal("130000.00")
     description = "Pagamento Teste"
     pix_key = "12345678909"
@@ -372,29 +379,30 @@ def test_transfer_pix_payment_lazy_status_update(
                 "number": "123456789",
             },
             "deductedValue": "0.00",
-            "dictCode": pix_key,
+            "dictCode": "12345678909",
             "dictCodeType": "CPF",
-            "id": pix_id,
-            "nominalValue": str(value),
+            "id": "c1a4f3e2-9b7d-4e5a-8c2e-3f1b2a4d5e6f",
+            "nominalValue": "130000.00",
             "obs": "payment mockado",
             "payer": {
                 "documentNumber": "20157935000193",
                 "documentType": "CPNJ",
                 "name": "John Doe SA",
             },
-            "paymentValue": str(value),
+            "paymentValue": "130000.00",
             "remittanceInformation": "informação da transferência",
-            "status": OrderStatus.PAYED,
+            "status": "PAYED",
             "tags": [],
-            "totalValue": str(value),
+            "totalValue": "130000.00",
             "transaction": {
                 "code": "13a654q",
                 "date": "2025-01-08T13:44:36Z",
                 "endToEnd": "a213e5q564as456f4as56f",
-                "value": str(value),
+                "value": "130000.00",
             },
             "workspaceId": "3870ba5d-d58e-4182-992f-454e5d0e08e2",
         },
+        "request_id": "c1a4f3e2-9b7d-4e5a-8c2e-3f1b2a4d5e6f",
         "error": "",
     }
     assert mock_create.call_count == 1

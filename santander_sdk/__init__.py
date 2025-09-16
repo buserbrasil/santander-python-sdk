@@ -22,7 +22,6 @@ from santander_sdk.payment_receipts import (
 )
 from santander_sdk.api_client.exceptions import (
     SantanderRequestError,
-    SantanderValueError,
     SantanderError,
 )
 
@@ -48,6 +47,5 @@ __all__ = [
     "ReceiptCreationHistoryResponse",
     # Comom exceptions
     "SantanderRequestError",
-    "SantanderValueError",
     "SantanderError",
 ]

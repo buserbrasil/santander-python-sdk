@@ -7,10 +7,7 @@ import re
 import requests
 import pathlib
 
-from santander_sdk.api_client.exceptions import (
-    SantanderRequestError,
-    SantanderValueError,
-)
+from santander_sdk.api_client.exceptions import SantanderRequestError
 
 logger = logging.getLogger("santanderLogger")
 
@@ -53,7 +50,7 @@ def get_pix_key_type(chave: str) -> DictCodeTypes:
     elif len(only_numbers(chave)) == 13 and chave.startswith("+"):
         return "CELULAR"
     else:
-        raise SantanderValueError(f"Chave Pix em formato inválido: {chave}")
+        raise ValueError(f"Chave Pix em formato inválido: {chave}")
 
 
 def try_parse_response_to_json(response) -> dict | None:
@@ -149,7 +146,7 @@ def document_type(document_number: str) -> Literal["CPF", "CNPJ"]:
         return "CPF"
     if len(document_number) == 14:
         return "CNPJ"
-    raise SantanderValueError('Unknown document type "{document_number}"')
+    raise ValueError('Unknown document type "{document_number}"')
 
 
 def get_content_from_url(url: str) -> bytes:
