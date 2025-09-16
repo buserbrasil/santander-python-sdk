@@ -1,5 +1,4 @@
 import json
-import uuid
 import pytest
 from decimal import Decimal
 
