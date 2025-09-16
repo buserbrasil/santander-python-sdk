@@ -30,14 +30,6 @@ class SantanderClientError(SantanderError):
         return f"Santander client error: {super().__str__()}"
 
 
-class SantanderValueError(SantanderError, ValueError):
-    def __init__(self, message):
-        super().__init__(message)
-
-    def __str__(self):
-        return f"Internal data error: {super().__str__()}"
-
-
 class SantanderRejectedError(SantanderError):
     def __init__(self, message):
         super().__init__(message)

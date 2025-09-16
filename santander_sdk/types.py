@@ -164,5 +164,6 @@ SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse
 
 class TransferPixResult(TypedDict):
     success: bool
+    request_id: str | None
     data: SantanderPixResponse | None
     error: str

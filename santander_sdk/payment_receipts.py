@@ -46,10 +46,7 @@ import logging
 from time import sleep
 from typing import Generator, List, cast
 from santander_sdk.api_client.client import SantanderApiClient
-from santander_sdk.api_client.exceptions import (
-    SantanderRequestError,
-    SantanderValueError,
-)
+from santander_sdk.api_client.exceptions import SantanderRequestError
 from santander_sdk.typing.receipts_types import (
     ALREADY_REQUESTED_RECEIPT,
     ReceiptInfoResponse,
@@ -105,7 +102,7 @@ def create_receipt(
     You need the request.requestId to get the receipt when it's ready.
     """
     if not payment_id:
-        raise SantanderValueError("payment_id is required to create a receipt request.")
+        raise ValueError("payment_id is required to create a receipt request.")
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests"
     try:
         response = cast(ReceiptInfoResponse, client.post(endpoint, None))
@@ -128,7 +125,7 @@ def get_receipt(
 ) -> ReceiptInfoResult:
     """Get the payment receipt information to download the file."""
     if not (payment_id and receipt_request_id):
-        raise SantanderValueError("payment_id and receipt_request are required")
+        raise ValueError("payment_id and receipt_request are required")
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests/{receipt_request_id}"
     response = cast(ReceiptInfoResponse, client.get(endpoint))
     return _receipt_result(response, payment_id)

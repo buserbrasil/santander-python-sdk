@@ -97,6 +97,33 @@ def test_request_create_pix_payment_by_key(api_client, mock_sdk):
         mock_sdk.confirm.reset_mock()
 
 
+def test_request_create_pix_payment_by_passing_uuid(api_client, mock_sdk):
+    response = transfer_pix(
+        api_client,
+        "12345678909",
+        D("123"),
+        "Pagamento Teste",
+        tags=tags,
+        id="b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e",
+    )
+    assert response["success"] is True
+    mock_sdk.create.assert_called_with(
+        {
+            "id": "b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e",
+            "tags": tags,
+            "paymentValue": "123.00",
+            "remittanceInformation": "Pagamento Teste",
+            "dictCode": "12345678909",
+            "dictCodeType": "CPF",
+        }
+    )
+    mock_sdk.ready_to_pay.assert_called_once_with(create_pix_response)
+    confirm_payment_request_url = mock_sdk.confirm.calls[0].request.url
+    assert confirm_payment_request_url.contains(
+        "pix_payments/b8e2c7b8-2e8e-4e2c-8e6e-2e8e4e2c8e6e"
+    )
+
+
 def test_request_create_pix_payment_with_beneficiary(api_client, mock_sdk):
     response = transfer_pix(
         api_client, santander_beneciary_john, D("1248.33"), "Pagamento de teste", tags
