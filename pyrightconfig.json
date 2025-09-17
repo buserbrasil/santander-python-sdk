@@ -1,0 +1,13 @@
+{
+  "reportUnboundVariable": "error",
+  "reportPossiblyUnboundVariable": "error",
+  "reportUnusedVariable": "warning",
+  "reportUnusedParameter": "warning",
+  "strictListInference": true,
+  "strictDictionaryInference": true,
+  "strictSetInference": true,
+  "strictParameterNoneValue": true,
+  "enableTypeIgnoreComments": true,
+  "reportImportCycles": true,
+  "reportUnusedImport": true
+}
