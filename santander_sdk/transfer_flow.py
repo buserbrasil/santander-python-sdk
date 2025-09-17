@@ -1,8 +1,6 @@
-import logging
 from time import sleep
 from typing import List, Literal, cast
 
-from santander_sdk.api_client import client
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.exceptions import (
     SantanderClientError,

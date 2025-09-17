@@ -123,7 +123,7 @@ class SantanderApiClient:
         data: dict | None,
         error: Exception | None,
     ):
-        if not self.config.log_request_response_level in ["ALL", "ERROR"]:
+        if self.config.log_request_response_level not in ["ALL", "ERROR"]:
             self.logger.info("Logging error is disabled in client configuration")
 
         response = getattr(error, "response", None)
