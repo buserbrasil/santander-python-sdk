@@ -4,7 +4,6 @@ import responses
 
 from santander_sdk.api_client.helpers import (
     download_file,
-    get_status_code_description,
     polling_until_condition,
     retry_one_time_on_request_exception,
     save_bytes_to_file,
@@ -36,11 +35,6 @@ def test_get_pix_key_type_invalid():
 
     with pytest.raises(ValueError):
         get_pix_key_type("55 34 12345678")
-
-
-def test_get_status_code_description():
-    assert get_status_code_description(200) == "200 - Sucesso"
-    assert get_status_code_description(392) == "392 - Erro desconhecido"
 
 
 @pytest.fixture

@@ -1,5 +1,4 @@
 from decimal import Decimal as D
-import logging
 import uuid
 from typing import cast
 
@@ -17,7 +16,6 @@ from santander_sdk.types import (
     TransferPixResult,
 )
 
-logger = logging.getLogger("santanderLogger")
 PIX_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments"
 
 
@@ -60,7 +58,7 @@ def transfer_pix(
         }
     except Exception as e:
         error_message = str(e)
-        logger.error(error_message)
+        client.logger.error(error_message)
         return {
             "success": False,
             "request_id": transfer_flow.request_id,
@@ -83,7 +81,7 @@ def _generate_create_pix_dict(
     value: D,
     description: str,
     tags: list = [],
-    id: uuid.UUID | None = None,
+    id: uuid.UUID | str | None = None,
 ) -> dict:
     data = {
         "tags": tags,

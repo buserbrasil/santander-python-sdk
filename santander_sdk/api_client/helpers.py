@@ -61,26 +61,6 @@ def try_parse_response_to_json(response) -> dict | None:
     return error_content
 
 
-SANTANDER_STATUS_DESCRIPTIONS = {
-    200: "Sucesso",
-    201: "Recurso criado",
-    400: "Erro de informação do cliente",
-    401: "Não autorizado/Autenticado",
-    403: "Não Autorizado",
-    404: "Informação não encontrada",
-    406: "O recurso de destino não possui uma representação atual que seria aceitável",
-    422: "Entidade não processa/inadequada",
-    429: "O usuário enviou muitas solicitações em um determinado período",
-    500: "Erro de Servidor, Aplicação está fora",
-    501: "O servidor não oferece suporte à funcionalidade necessária para atender à solicitação",
-}
-
-
-def get_status_code_description(status_code: int | str) -> str:
-    """Retorna a descrição do status do Santander"""
-    return f"{status_code} - {SANTANDER_STATUS_DESCRIPTIONS.get(int(status_code), 'Erro desconhecido')}"
-
-
 def only_numbers(s):
     return re.sub("[^0-9]", "", s) if s else s
 

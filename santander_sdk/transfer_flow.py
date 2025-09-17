@@ -2,6 +2,7 @@ import logging
 from time import sleep
 from typing import List, Literal, cast
 
+from santander_sdk.api_client import client
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.exceptions import (
     SantanderClientError,
@@ -32,10 +33,8 @@ class SantanderPaymentFlow:
         self,
         client: SantanderApiClient,
         endpoint: str,
-        logger: logging.Logger | None = None,
     ):
         self.client = client
-        self.logger = logger or logging.getLogger(__name__)
         self.endpoint = endpoint
         self.request_id = None
 
@@ -45,13 +44,13 @@ class SantanderPaymentFlow:
         )
         self.request_id = response.get("id")
         self._check_for_rejected_error(response)
-        self.logger.info("Payment created: ", response.get("id"))
+        self.client.logger.info("Payment created: ", response.get("id"))
         return response
 
     def ensure_ready_to_pay(self, confirm_data) -> None:
         payment_status = confirm_data.get("status")
         if payment_status != CreateOrderStatus.READY_TO_PAY:
-            self.logger.info("PIX is not ready for payment", payment_status)
+            self.client.logger.info("PIX is not ready for payment", payment_status)
             self._payment_status_polling(
                 payment_id=confirm_data.get("id"),
                 until_status=[CreateOrderStatus.READY_TO_PAY],
@@ -64,7 +63,7 @@ class SantanderPaymentFlow:
         try:
             confirm_response = self._request_confirm_payment(confirm_data, payment_id)
         except SantanderRequestError as e:
-            self.logger.error(str(e), payment_id, "checking current status")
+            self.client.logger.error(str(e), payment_id, "checking current status")
             confirm_response = self._request_payment_status(payment_id)
 
         if not confirm_response.get("status") == ConfirmOrderStatus.PAYED:
@@ -73,7 +72,9 @@ class SantanderPaymentFlow:
                     payment_id, confirm_response.get("status", "")
                 )
             except SantanderStatusTimeoutError as e:
-                self.logger.info("Timeout occurred while updating status:", str(e))
+                self.client.logger.info(
+                    "Timeout occurred while updating status:", str(e)
+                )
         return confirm_response
 
     @retry_one_time_on_request_exception
@@ -125,7 +126,7 @@ class SantanderPaymentFlow:
 
         for attempt in range(1, max_update_attemps + 1):
             response = self._request_payment_status(payment_id)
-            self.logger.info(
+            self.client.logger.info(
                 f"Checking status by polling: {payment_id} - {response.get('status')}"
             )
             if response.get("status") in until_status:
