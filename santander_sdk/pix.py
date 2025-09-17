@@ -27,7 +27,7 @@ def transfer_pix(
     tags: list[str] = [],
     id: uuid.UUID | str | None = None,
 ) -> TransferPixResult:
-    transfer_flow = SantanderPaymentFlow(client, PIX_ENDPOINT, logger)
+    transfer_flow = SantanderPaymentFlow(client, PIX_ENDPOINT)
 
     try:
         if value is None or value <= 0:
