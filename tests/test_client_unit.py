@@ -1,6 +1,9 @@
+import re
 import pytest
 from decimal import Decimal as D
 from unittest.mock import patch
+
+import responses
 
 from mock.santander_mocker import (
     SANTANDER_URL,
@@ -12,10 +15,14 @@ from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.client_configuration import (
     SantanderClientConfiguration,
 )
-from santander_sdk.api_client.exceptions import SantanderClientError
+from santander_sdk.api_client.exceptions import (
+    SantanderClientError,
+    SantanderRequestError,
+)
 from santander_sdk.types import OrderStatus
 
 
+@responses.activate
 @pytest.fixture
 def client():
     config = SantanderClientConfiguration(
@@ -25,7 +32,18 @@ def client():
         workspace_id="test_workspace_id",
         base_url=SANTANDER_URL,
     )
-    return SantanderApiClient(config)
+    responses.add(
+        responses.POST,
+        re.compile(r".*v2/token$"),
+        json={"access_token": "test_access_token", "expires_in": 3600},
+        status=200,
+    )
+    client_instance = SantanderApiClient(config)
+
+    with patch("logging.getLogger") as mock_get_logger:
+        mock_logger = mock_get_logger.return_value
+        client_instance.logger = mock_logger
+        yield client_instance
 
 
 @patch("santander_sdk.api_client.client.requests.Session.request")
@@ -100,3 +118,73 @@ def test_patch_method(mock_request, client):
     mock_request.assert_called_once_with(
         "PATCH", "test_endpoint", data={"patch_data_key": "patch_data_value"}
     )
+
+
+@responses.activate
+def test_request_log_success_all(client):
+    client.config.log_request_response_level = "ALL"
+    responses.add(
+        responses.POST,
+        re.compile(r".*/test_endpoint$"),
+        json={"id": "123456789", "status": "success"},
+        status=200,
+    )
+
+    with patch.object(client, "logger") as mock_logger:
+        result = client._request(
+            "POST", "/test_endpoint", data={"pix_key": "123456789", "amount": "100.00"}
+        )
+
+    extra = mock_logger.info.call_args[1]["extra"]
+    assert result == {"id": "123456789", "status": "success"}
+    assert mock_logger.info.call_args[0][0] == "API request successful"
+    mock_logger.info.assert_called_once()
+    expected_extra = {
+        "method": "POST",
+        "url": "/test_endpoint",
+        "status_code": 200,
+        "request_body": {"pix_key": "123456789", "amount": "100.00"},
+        "response_body": {"id": "123456789", "status": "success"},
+        "status": "success",
+    }
+
+    for key, value in expected_extra.items():
+        assert extra[key] == value
+
+
+@responses.activate
+def test_request_log_error(client):
+    client.config.log_request_response_level = "ERROR"
+    request_data = {"pix_key": "123456789", "amount": "100.00"}
+    error_response = {"error": "Bad Request"}
+
+    responses.add(
+        responses.POST,
+        f"{SANTANDER_URL}/test_endpoint",
+        json=error_response,
+        status=400,
+    )
+
+    with patch.object(client, "logger") as mock_logger:
+        with pytest.raises(SantanderRequestError):
+            client._request("POST", "/test_endpoint", data=request_data)
+
+    mock_logger.error.assert_called_once()
+    assert mock_logger.error.call_args[0][0] == "API request failed"
+
+    extra = mock_logger.error.call_args[1]["extra"]
+    expected_fields = {
+        "method": "POST",
+        "url": "/test_endpoint",
+        "status_code": 400,
+        "request_body": request_data,
+        "response_body": error_response,
+        "status": "error",
+        "error": {
+            "message": "400 Client Error: Bad Request for url: https://trust-sandbox.api.santander.com.br/test_endpoint",
+            "type": "HTTPError",
+        },
+    }
+
+    for key, value in expected_fields.items():
+        assert extra[key] == value

@@ -20,8 +20,7 @@ def api_client():
 
 @pytest.fixture
 def payment_flow(api_client):
-    logger = MagicMock()
-    return SantanderPaymentFlow(api_client, PIX_ENDPOINT, logger)
+    return SantanderPaymentFlow(api_client, PIX_ENDPOINT)
 
 
 @pytest.fixture

@@ -42,7 +42,6 @@ Check out more in the documentation:
 https://developer.santander.com.br/api/documentacao/comprovantes-visao-geral/
 """
 
-import logging
 from time import sleep
 from typing import Generator, List, cast
 from santander_sdk.api_client.client import SantanderApiClient
@@ -59,8 +58,6 @@ from santander_sdk.typing.receipts_types import (
 )
 
 RECEIPTS_ENDPOINT = "/consult_payment_receipts/v1/payment_receipts"
-
-logger = logging.getLogger(__name__)
 
 
 def payment_list(
@@ -161,10 +158,12 @@ def _handle_already_created(
     This happens when a receipt was requested a long time ago or the previous
     attempt returned an error like EXPUNGED or ERROR.
     """
-    logger.info("Receipt already requested. Trying to get the receipt request ID.")
+    client.logger.info(
+        "Receipt already requested. Trying to get the receipt request ID."
+    )
     receipt_history = receipt_creation_history(client, payment_id)
     if not receipt_history["paymentReceiptsFileRequests"]:
-        logger.error("No previous receipts in history")
+        client.logger.error("No previous receipts in history")
         raise
     last_from_history = receipt_history["paymentReceiptsFileRequests"][-1]
     request_id = last_from_history["request"]["requestId"]
@@ -172,7 +171,7 @@ def _handle_already_created(
     if result["status"] not in [ReceiptStatus.EXPUNGED, ReceiptStatus.ERROR]:
         return result
 
-    logger.info("The last receipt is in an error state, creating another one.")
+    client.logger.info("The last receipt is in an error state, creating another one.")
     sleep(0.5)
     endpoint = f"{RECEIPTS_ENDPOINT}/{payment_id}/file_requests"
     response = cast(ReceiptInfoResponse, client.post(endpoint, None))
