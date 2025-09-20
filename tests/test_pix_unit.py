@@ -13,7 +13,6 @@ from mock.santander_mocker import (
     get_dict_payment_pix_response,
     beneciary_john_dict_json,
 )
-from santander_sdk.types import OrderStatus
 
 import pytest
 
@@ -26,12 +25,10 @@ espected_create_pix_dict = {
 }
 tags = ["bf: 1234", "nf: 1234", "nf_data: 2021-10-10"]
 create_pix_response = get_dict_payment_pix_response(
-    "1234", D("123"), OrderStatus.PENDING_VALIDATION
+    "1234", D("123"), "PENDING_VALIDATION"
 )
-ready_to_pay_response = get_dict_payment_pix_response(
-    "1234", D("123"), OrderStatus.READY_TO_PAY
-)
-confirm_response = get_dict_payment_pix_response("1234", D("123"), OrderStatus.PAYED)
+ready_to_pay_response = get_dict_payment_pix_response("1234", D("123"), "READY_TO_PAY")
+confirm_response = get_dict_payment_pix_response("1234", D("123"), "PAYED")
 
 
 @pytest.fixture

@@ -21,7 +21,6 @@ from mock.santander_mocker import (
     mock_create_pix_endpoint,
     mock_pix_status_endpoint,
 )
-from santander_sdk.types import OrderStatus
 
 
 @pytest.fixture
@@ -38,13 +37,13 @@ def test_transfer_pix_payment_success(mock_api, client_instance):
     description = "Pagamento Teste"
     pix_key = "12345678909"
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
+        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
+        mock_api, pix_id, value, "PAYED", pix_key, "CPF"
     )
     transfer_result = transfer_pix(
         client_instance, pix_key, value, description, tags=["teste"]
@@ -123,10 +122,10 @@ def test_transfer_pix_payment_timeout_create(
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
     )
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
 
@@ -149,13 +148,13 @@ def test_transfer_pix_payment_timeout_before_authorize(
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
+        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_CONFIRMATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_CONFIRMATION", pix_key, "CPF"
     )
 
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
@@ -180,7 +179,7 @@ def test_transfer_pix_payment_timeout_before_authorize(
             },
             "paymentValue": "123.44",
             "remittanceInformation": "informação da transferência",
-            "status": OrderStatus.PENDING_CONFIRMATION,
+            "status": "PENDING_CONFIRMATION",
             "tags": [],
             "totalValue": "123.44",
             "transaction": {
@@ -208,7 +207,7 @@ def test_transfer_pix_payment_rejected_on_create(
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
+        mock_api, pix_id, value, "REJECTED", pix_key, "CPF"
     )
 
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
@@ -230,10 +229,10 @@ def test_transfer_pix_payment_rejected_on_confirm(
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
+        mock_api, pix_id, value, "READY_TO_PAY", pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.REJECTED, pix_key, "CPF"
+        mock_api, pix_id, value, "REJECTED", pix_key, "CPF"
     )
 
     transfer_result = transfer_pix(client_instance, pix_key, value, description)
@@ -258,14 +257,14 @@ def test_transfer_pix_payment_with_beneficiary(
         mock_api,
         pix_id,
         value,
-        OrderStatus.PENDING_VALIDATION,
+        "PENDING_VALIDATION",
         santander_beneciary_john,
     )
     mock_status = mock_pix_status_endpoint(
-        mock_api, pix_id, value, OrderStatus.READY_TO_PAY, santander_beneciary_john
+        mock_api, pix_id, value, "READY_TO_PAY", santander_beneciary_john
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PAYED, santander_beneciary_john
+        mock_api, pix_id, value, "PAYED", santander_beneciary_john
     )
 
     transfer_result = transfer_pix(
@@ -348,24 +347,24 @@ def test_transfer_pix_payment_lazy_status_update(
     pix_key = "12345678909"
 
     mock_create = mock_create_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
+        mock_api, pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
     )
     mock_confirm = mock_confirm_pix_endpoint(
-        mock_api, pix_id, value, OrderStatus.PAYED, pix_key, "CPF"
+        mock_api, pix_id, value, "PAYED", pix_key, "CPF"
     )
 
     mock_status_pending = mock_api.add(
         responses.GET,
         f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
         json=get_dict_payment_pix_response(
-            pix_id, value, OrderStatus.PENDING_VALIDATION, pix_key, "CPF"
+            pix_id, value, "PENDING_VALIDATION", pix_key, "CPF"
         ),
     )
     mock_status_ready = mock_api.add(
         responses.GET,
         f"{PIX_ENDPOINT_WITH_WORKSPACE}/{pix_id}",
         json=get_dict_payment_pix_response(
-            pix_id, value, OrderStatus.READY_TO_PAY, pix_key, "CPF"
+            pix_id, value, "READY_TO_PAY", pix_key, "CPF"
         ),
     )
     transfer_result = transfer_pix(client_instance, pix_key, value, description)

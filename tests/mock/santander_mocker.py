@@ -1,5 +1,6 @@
 from decimal import Decimal
-from typing import cast
+import re
+from typing import List, Literal, cast
 from urllib.parse import urljoin
 
 from responses import RequestsMock
@@ -7,6 +8,7 @@ import responses
 
 from santander_sdk.api_client.client import TOKEN_ENDPOINT
 from santander_sdk.api_client.workspaces import WORKSPACES_ENDPOINT
+from santander_sdk.barcode_payment import BANKSLIP_ENDPOINT, BARCODE_ENDPOINT
 from santander_sdk.pix import PIX_ENDPOINT
 from santander_sdk.types import SantanderBeneficiary, OrderStatus
 
@@ -80,7 +82,7 @@ def get_dict_payment_pix_request(
     key: str | SantanderBeneficiary,
     key_type: str = "",
 ) -> dict:
-    payment = {
+    payment: dict = {
         "paymentValue": value,
         "remittanceInformation": "informação da transferência",
         "tags": ["RH", "123456"],
@@ -199,7 +201,7 @@ santander_beneciary_john = SantanderBeneficiary(
 )
 
 payment_response_by_beneficiary = get_dict_payment_pix_response(
-    "12345678", Decimal("299.99"), OrderStatus.READY_TO_PAY, santander_beneciary_john
+    "12345678", Decimal("299.99"), "READY_TO_PAY", santander_beneciary_john
 )
 payment_response_by_beneficiary = get_dict_payment_pix_request(
     "12345678", Decimal("299.99"), santander_beneciary_john
@@ -347,4 +349,64 @@ def mock_workspaces_endpoint():
 def mock_auth_endpoint(responses: RequestsMock):
     return responses.add(
         responses.POST, urljoin(SANTANDER_URL, TOKEN_ENDPOINT), json=dict_token_response
+    )
+
+
+def barcode_response_dict(
+    id,
+    barcode,
+    status: OrderStatus,
+    value: str = str("200.15"),
+    tags: List | None = ["tag1", "tag2"],
+):
+    return {
+        "id": id,
+        "workspaceId": TEST_WORKSPACE_ID,
+        "code": barcode,
+        "debitAccount": {"branch": "1", "number": "100022349"},
+        "status": status,
+        "rejectReason": None,
+        "paymentType": "TAXES",
+        "accountingDate": "2025-01-17",
+        "finalPayer": {
+            "name": "JAJA PENUMPER ALFA LTDA",
+            "documentType": "CNPJ",
+            "documentNumber": "63918424000150",
+        },
+        "totalValue": value,
+        "concessionary": {"code": 48, "name": "AES ELETROPAULO"},
+        "transaction": {
+            "value": value,
+            "code": "VX43C02501171347300469" if "PAYED" else None,
+            "date": "2025-01-17T16:47:30Z",
+        },
+        "paymentValue": value,
+        "tags": tags or [],
+    }
+
+
+def mock_barcode_response(
+    rsp: RequestsMock,
+    json: dict,
+    step: Literal["CREATE", "CONFIRM", "STATUS"],
+    status: int = 200,
+    type: Literal["barcode", "bankslip"] = "bankslip",
+):
+    pathern_endpoint = BARCODE_ENDPOINT if type == "barcode" else BANKSLIP_ENDPOINT
+
+    if step == "CREATE":
+        pathern = pathern_endpoint
+        method = "POST"
+    elif step == "CONFIRM":
+        pathern = f"{pathern_endpoint}/{json['id']}"
+        method = "PATCH"
+    elif step == "STATUS":
+        pathern = f"{pathern_endpoint}/{json['id']}"
+        method = "GET"
+    else:
+        raise ValueError("Unsuported step")
+
+    pathern = pathern.replace(":workspaceid", TEST_WORKSPACE_ID)
+    return rsp.add(
+        url=re.compile(f".*{pathern}"), json=json, method=method, status=status
     )

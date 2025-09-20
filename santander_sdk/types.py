@@ -104,25 +104,9 @@ class SantanderDebitAccount(TypedDict):
     number: str
 
 
-class CreateOrderStatus:
-    READY_TO_PAY = "READY_TO_PAY"
-    PENDING_VALIDATION = "PENDING_VALIDATION"
-    REJECTED = "REJECTED"
-
-
-class ConfirmOrderStatus:
-    PAYED = "PAYED"
-    PENDING_CONFIRMATION = "PENDING_CONFIRMATION"
-    REJECTED = "REJECTED"
-
-
-class OrderStatus(ConfirmOrderStatus, CreateOrderStatus):
-    pass
-
-
-OrderStatusType = Literal[
-    "READY_TO_PAY", "PENDING_VALIDATION", "PAYED", "PENDING_CONFIRMATION", "REJECTED"
-]
+CreateOrderStatus = Literal["READY_TO_PAY", "PENDING_VALIDATION", "REJECTED"]
+ConfirmOrderStatus = Literal["PAYED", "PENDING_CONFIRMATION", "REJECTED"]
+OrderStatus = CreateOrderStatus | ConfirmOrderStatus
 
 
 class SantanderTransferResponse(TypedDict):
@@ -153,17 +137,17 @@ class SantanderTransferResponse(TypedDict):
     transaction: SantanderTransaction
     tags: list[str]
     paymentValue: str
-    status: OrderStatusType
+    status: OrderStatus
     dictCode: str | None
     dictCodeType: Literal["CPF", "CNPJ", "CELULAR", "EMAIL", "EVP"] | None
     beneficiary: SantanderBeneficiary | None
 
 
-SantanderPixResponse = SantanderTransferResponse | SantanderAPIErrorResponse
+SantanderResponse = SantanderTransferResponse | SantanderAPIErrorResponse
 
 
-class TransferPixResult(TypedDict):
+class TransferResult(TypedDict):
     success: bool
     request_id: str | None
-    data: SantanderPixResponse | None
+    data: SantanderResponse | None
     error: str
