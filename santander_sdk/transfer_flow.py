@@ -41,7 +41,7 @@ class SantanderPaymentFlow:
     def ensure_ready_to_pay(self, confirm_data) -> None:
         payment_status = confirm_data.get("status")
         if payment_status != "READY_TO_PAY":
-            self.client.logger.info("PIX is not ready for payment", payment_status)
+            self.client.logger.info("Payment is not ready for payment", payment_status)
             self._payment_status_polling(
                 payment_id=confirm_data.get("id"),
                 until_status=["READY_TO_PAY"],
