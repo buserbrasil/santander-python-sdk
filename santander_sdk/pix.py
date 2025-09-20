@@ -12,8 +12,8 @@ from santander_sdk.api_client.helpers import (
 from santander_sdk.transfer_flow import SantanderPaymentFlow
 from santander_sdk.types import (
     SantanderBeneficiary,
-    SantanderPixResponse,
-    TransferPixResult,
+    SantanderTransferResponse,
+    TransferResult,
 )
 
 PIX_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid/pix_payments"
@@ -26,7 +26,7 @@ def transfer_pix(
     description: str,
     tags: list[str] = [],
     id: uuid.UUID | str | None = None,
-) -> TransferPixResult:
+) -> TransferResult:
     transfer_flow = SantanderPaymentFlow(client, PIX_ENDPOINT)
 
     try:
@@ -37,7 +37,8 @@ def transfer_pix(
             pix_key, value, description, tags, id
         )
         create_pix_response = transfer_flow.create_payment(create_pix_dict)
-        if not create_pix_response.get("id"):
+        payment_id = create_pix_response.get("id")
+        if not payment_id:
             raise SantanderClientError("Payment ID was not returned on creation")
         if create_pix_response.get("status") is None:
             raise SantanderClientError("Payment status was not returned on creation")
@@ -47,9 +48,7 @@ def transfer_pix(
             "status": "AUTHORIZED",
             "paymentValue": truncate_value(value),
         }
-        confirm_response = transfer_flow.confirm_payment(
-            payment_data, create_pix_response.get("id")
-        )
+        confirm_response = transfer_flow.confirm_payment(payment_data, payment_id)
         return {
             "success": True,
             "request_id": transfer_flow.request_id,
@@ -69,11 +68,11 @@ def transfer_pix(
 
 def get_transfer(
     client: SantanderApiClient, pix_payment_id: str
-) -> SantanderPixResponse:
+) -> SantanderTransferResponse:
     if not pix_payment_id:
         raise ValueError("pix_payment_id not provided")
     response = client.get(f"{PIX_ENDPOINT}/{pix_payment_id}")
-    return cast(SantanderPixResponse, response)
+    return cast(SantanderTransferResponse, response)
 
 
 def _generate_create_pix_dict(
@@ -83,7 +82,7 @@ def _generate_create_pix_dict(
     tags: list = [],
     id: uuid.UUID | str | None = None,
 ) -> dict:
-    data = {
+    data: dict = {
         "tags": tags,
         "paymentValue": truncate_value(value),
         "remittanceInformation": description,

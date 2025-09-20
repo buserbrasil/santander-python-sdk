@@ -1,3 +1,4 @@
+import re
 import pytest
 from santander_sdk.api_client.client import SantanderApiClient
 from santander_sdk.api_client.client_configuration import SantanderClientConfiguration
@@ -15,3 +16,19 @@ def client_instance():
             workspace_id=TEST_WORKSPACE_ID,
         )
     )
+
+
+@pytest.fixture
+def mock_auth(responses):
+    responses.add(
+        method=responses.POST,
+        url=re.compile(r".*oauth/v2/token"),
+        json={
+            "access_token": "mocked_access_token",
+            "token_type": "bearer",
+            "expires_in": 3600,
+            "scope": "read write",
+        },
+        status=200,
+    )
+    yield responses

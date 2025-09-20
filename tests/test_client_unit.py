@@ -19,7 +19,6 @@ from santander_sdk.api_client.exceptions import (
     SantanderClientError,
     SantanderRequestError,
 )
-from santander_sdk.types import OrderStatus
 
 
 @responses.activate
@@ -49,7 +48,7 @@ def client():
 @patch("santander_sdk.api_client.client.requests.Session.request")
 def test_request(mock_request, client):
     response_dict = get_dict_payment_pix_response(
-        "12345678", D(299.99), OrderStatus.READY_TO_PAY, "12345678909", "CPF"
+        "12345678", D(299.99), "READY_TO_PAY", "12345678909", "CPF"
     )
     request_dict = get_dict_payment_pix_request(
         "12345678", D(299.99), "12345678909", "CPF"

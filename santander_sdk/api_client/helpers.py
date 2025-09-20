@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from decimal import ROUND_DOWN, Decimal
 import logging
 from itertools import cycle
@@ -158,3 +159,18 @@ def polling_until_condition(
             return result
         sleep(interval)
     raise TimeoutError("Timeout polling until condition is met")
+
+
+def today() -> date:
+    return datetime.now().date()
+
+
+def to_iso_date_string(value: str | date) -> str:
+    if isinstance(value, date):
+        return value.isoformat()
+    try:
+        return date.fromisoformat(value).isoformat()
+    except ValueError:
+        raise ValueError(
+            f"Invalid date format: {value}. Expected Iso Format YYYY-MM-DD."
+        )
