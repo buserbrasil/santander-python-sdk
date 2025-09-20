@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal as D
-import logging
 from typing import Literal, cast
 
 from santander_sdk import SantanderApiClient
@@ -14,8 +13,6 @@ from santander_sdk.types import SantanderResponse, TransferResult
 
 SantanderBoletoResponse = SantanderResponse
 TransferBoletoReponse = TransferResult
-
-logger = logging.getLogger("__name__")
 
 BASE_ENDPOINT = "/management_payments_partners/v1/workspaces/:workspaceid"
 BANKSLIP_ENDPOINT = f"{BASE_ENDPOINT}/bank_slip_payments"  # Boleto bancário
