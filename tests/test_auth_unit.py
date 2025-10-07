@@ -1,5 +1,5 @@
 from re import compile as regex
-from datetime import datetime
+from datetime import timedelta
 
 import pytest
 from freezegun import freeze_time
@@ -51,34 +51,20 @@ def test_renew_when_token_empty(auth, responses):
     assert req.headers["X-Application-Key"] == auth.client_id
 
 
-@freeze_time("2025-02-13 10:05")
 def test_renew_token_when_expired(auth, responses):
     responses.add(
         responses.POST,
         regex(".+/auth/oauth/v2/token"),
-        json={"access_token": "NEW_VALID_TOKEN", "expires_in": 120},
+        json={"access_token": "FRESH_TOKEN", "expires_in": 120},
     )
-    auth.token = "VALID_TOKEN", datetime(2025, 2, 13, 10)
+    with freeze_time("2025-02-13 10:00"):
+        auth.token_store.set("EXPIRED_TOKEN", timedelta(0))
 
-    req = PreparedRequest()
-    req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
+    with freeze_time("2025-02-13 10:01"):
+        req = PreparedRequest()
+        req.prepare("GET", "https://api.santander.com.br/orders", auth=auth)
 
-    assert req.headers["Authorization"] == "Bearer NEW_VALID_TOKEN"
-    assert auth.expires_at == datetime(2025, 2, 13, 10, 7)
-
-
-@freeze_time("2025-02-13 10:00")
-@pytest.mark.parametrize(
-    "expires_at,expected",
-    [
-        (None, True),
-        (datetime(2025, 2, 13, 10, 1), False),
-        (datetime(2025, 2, 13, 10, 0, 59), True),
-    ],
-)
-def test_is_expired(auth, expires_at, expected):
-    auth.expires_at = expires_at
-    assert auth.is_expired is expected
+    assert req.headers["Authorization"] == "Bearer FRESH_TOKEN"
 
 
 def test_invalid_credentials(auth, responses):
